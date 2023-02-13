@@ -1,0 +1,1 @@
+export type ArrayVals<T extends unknown[]> = T[number]
