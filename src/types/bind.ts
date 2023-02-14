@@ -4,6 +4,8 @@ export type BindTypes = "string" | "number" | "bigint" | "boolean" | "symbol" | 
 
 export type TypeCheckFunction<T> = (arg: unknown | T) => arg is T;
 
+export const SymbolForBind = Symbol("bind")
+
 export type PredicateBind<TLabel extends string, TPredicate> = {
   label: TLabel;
   [Symbol.iterator]: () => IterableIterator<PredicateRestBind<TLabel, TPredicate>>;
@@ -11,18 +13,23 @@ export type PredicateBind<TLabel extends string, TPredicate> = {
   rest: PredicateRestBind<TLabel, TPredicate>;
   s: PredicateRestBind<TLabel, TPredicate>;
   bindType: "predicateBind";
+  [SymbolForBind]: true 
 };
 
 export type PredicateRestBind<TLabel extends string, TPredicate> = {
   label: TLabel;
   predicate: TypeCheckFunction<TPredicate>;
   bindType: "predicateRestBind";
+  [SymbolForBind]: true 
 };
 
 export type PredicateWildCard<TPredicate> = {
   predicate: TypeCheckFunction<TPredicate>;
   bindType: "predicateWildCard";
+  [SymbolForBind]: true 
 };
+
+
 
 export type TypedBind<TType, TTypeLabel extends BindTypes, TLabel extends string> = {
   type: TType;
@@ -32,6 +39,7 @@ export type TypedBind<TType, TTypeLabel extends BindTypes, TLabel extends string
   rest: TypedRestBind<TType, TTypeLabel, TLabel>;
   s: TypedRestBind<TType, TTypeLabel, TLabel>;
   bindType: "typedBind";
+  [SymbolForBind]: true 
 };
 
 export type TypedRestBind<TType, TTypeLabel, TLabel extends string> = {
@@ -39,33 +47,39 @@ export type TypedRestBind<TType, TTypeLabel, TLabel extends string> = {
   typeLabel: TTypeLabel;
   label: TLabel;
   bindType: "typedRestBind";
+  [SymbolForBind]: true 
 };
 
 export type TypedWildCard<TType, TTypeLabel> = {
   type: TType;
   typeLabel: TTypeLabel;
   bindType: "typedWildCard";
+  [SymbolForBind]: true 
 };
 
-export type MatchBind<TLabel extends string, TMatch> = {
+
+
+export type MatchBind<TLabel extends string, TTest, TMatch extends Pattern<TTest> = PatternOrPredicateBind<TTest>> = {
   label: TLabel;
-  [Symbol.iterator]: () => IterableIterator<MatchRestBind<TLabel, TMatch>>;
+  [Symbol.iterator]: () => IterableIterator<MatchRestBind<TLabel, TTest, TMatch>>;
   rest: MatchRestBind<TLabel, TMatch>;
   s: MatchRestBind<TLabel, TMatch>;
-  match: Pattern<TMatch>;
+  match: TMatch;
   bindType: "matchBind";
+  [SymbolForBind]: true 
 };
 
-export type MatchRestBind<TLabel extends string, TMatch> = {
+export type MatchRestBind<TLabel extends string, TTest, TMatch extends Pattern<TTest> = PatternOrPredicateBind<TTest>> = {
   label: TLabel;
-  match: Pattern<TMatch>;
+  match: TMatch;
   bindType: "matchRestBind";
+  [SymbolForBind]: true 
 };
 
 export type WildCard<T> = PredicateWildCard<T>
-export type Bind<Label extends string, T> = PredicateBind<Label, T> | MatchBind<Label, PatternOrPredicateBind<T>> | WildCard<T>;
+export type Bind<Label extends string, T> = PredicateBind<Label, T> | MatchBind<Label, T, PatternOrPredicateBind<T>> | WildCard<T>;
 
-export type RestBind<Label extends string, T> = PredicateRestBind<Label, T> | MatchRestBind<Label, PatternOrPredicateBind<T>>;
+export type RestBind<Label extends string, T> = PredicateRestBind<Label, T> | MatchRestBind<Label, T, PatternOrPredicateBind<T>>;
 
 // export type RestWildCard<T> = PredicateRestWildCard<T> | MatchRestWildCard<Label, T>;
 

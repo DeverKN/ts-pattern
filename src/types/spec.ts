@@ -1,18 +1,20 @@
-import { ObjectRestSymbol } from "../old/pattern";
 import { ArrayVals } from "./helpers/ArrayVals";
-import { Bind, PredicateBind, RestBind } from "./bind";
+import { Bind, PredicateBind, PredicateWildCard, RestBind } from "./bind";
 import { Primitive } from "./helpers/primitives";
 
-export type PrimitivePattern<T> = T
+export const ObjectRestSymbol = Symbol("objectRest");
 
-export type StringLiteralPattern<T extends string> = T
+export type PrimitivePattern<T> = T;
+
+export type StringLiteralPattern<T extends string> = T;
 export type StringArrayPattern = (string | Bind<string, string>)[];
 export type StringPattern<T extends string> = StringLiteralPattern<T> | StringArrayPattern;
 
-type EmptyArrayPattern = []
+type EmptyArrayPattern = [];
 
-type RestEndListPattern<TArr> = [TArr | RestBind<string, TArr> | Bind<string, TArr>, ...(TArr | Bind<string, TArr>)[]];
-type RestStartListPattern<TArr> = [...(TArr | Bind<string, TArr>)[], TArr | Bind<string, TArr> | RestBind<string, TArr>[]];
+export type GenericListPattern<T> = (T | Bind<string, T> | RestBind<string, T>)[];
+type RestStartListPattern<TArr> = [TArr | RestBind<string, TArr> | Bind<string, TArr>, ...(TArr | Bind<string, TArr>)[]];
+type RestEndListPattern<TArr> = [...(TArr | Bind<string, TArr>)[], TArr | Bind<string, TArr> | RestBind<string, TArr>];
 type ListPatternHelper<T extends unknown[]> = T extends (infer TArr)[]
   ? RestStartListPattern<TArr> | RestEndListPattern<TArr>
   : never;
@@ -36,34 +38,50 @@ export type TotalObjectPattern<T extends Record<PropertyKey, unknown>> = {
 export type PartialObjectPattern<T extends Record<PropertyKey, unknown>> = {
   [Key in keyof T]: Pattern<T[Key]> | never;
 } & {
-  [ObjectRestSymbol]: Bind<string, unknown>;
+  [ObjectRestSymbol]: PredicateBind<string, unknown> | PredicateWildCard<unknown>;
 };
 
 export type ObjectPattern<T extends Record<PropertyKey, unknown>> =
   | T
-  | PartialObjectPattern<T>
+  // | PartialObjectPattern<T>
   | TotalObjectPattern<T>;
 
-export type Pattern<T> = T extends string
-  ? StringPattern<T> | Bind<string, T>
+type BasePattern<T> = T extends string
+  ? StringPattern<T>
   : T extends Primitive
-  ? T | Bind<string, T>
+  ? T
   : T extends never[]
-  ? EmptyArrayPattern | Bind<string, T>
+  ? EmptyArrayPattern
   : T extends unknown[]
-  ? ArrayPattern<T> | Bind<string, T>
+  ? ArrayPattern<T>
   : T extends Record<string, unknown>
-  ? ObjectPattern<T> | Bind<string, T>
+  ? ObjectPattern<T>
   : unknown;
 
-export type PatternOrPredicateBind<T> = T extends string
-  ? StringPattern<T> | PredicateBind<string, T>
-  : T extends Primitive
-  ? T | PredicateBind<string, T>
-  : T extends never[]
-  ? EmptyArrayPattern | PredicateBind<string, T>
-  : T extends unknown[]
-  ? ArrayPattern<T> | PredicateBind<string, T>
-  : T extends Record<string, unknown>
-  ? ObjectPattern<T> | PredicateBind<string, T>
-  : unknown;
+export type Pattern<T> = T | Bind<string, T> | BasePattern<T>
+
+// export type Pattern<T> = T extends string
+//   ? StringPattern<T> | Bind<string, T>
+//   : T extends Primitive
+//   ? T | Bind<string, T>
+//   : T extends never[]
+//   ? EmptyArrayPattern | Bind<string, T>
+//   : T extends unknown[]
+//   ? ArrayPattern<T> | Bind<string, T>
+//   : T extends Record<string, unknown>
+//   ? ObjectPattern<T> | Bind<string, T>
+//   : unknown;
+
+export type PatternOrPredicateBind<T> = T | PredicateBind<string, T> | PredicateWildCard<T> | BasePattern<T>
+
+// export type PatternOrPredicateBind<T> = T extends string
+//   ? StringPattern<T> | PredicateBind<string, T>
+//   : T extends Primitive
+//   ? T | PredicateBind<string, T>
+//   : T extends never[]
+//   ? EmptyArrayPattern | PredicateBind<string, T>
+//   : T extends unknown[]
+//   ? ArrayPattern<T> | PredicateBind<string, T>
+//   : T extends Record<string, unknown>
+//   ? ObjectPattern<T> | PredicateBind<string, T>
+//   : unknown;
