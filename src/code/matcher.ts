@@ -1,6 +1,6 @@
 import { NonExhaustiveError } from "../types/helpers/AssertNever";
 import { FallthroughMatches } from "../types/matcher";
-import { Pattern } from "../types/spec";
+import { Pattern } from "../types/pattern";
 import { against, assertRun, exhaustive, fallback, isNonExhaustiveError, makeMatchObject, MatchObject, run } from "./match";
 import { HandlerFunc } from "./matcherEngine";
 

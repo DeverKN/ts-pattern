@@ -1,27 +1,31 @@
-import { MatchBind, MatchRestBind, PredicateBind, PredicateRestBind } from "./bind";
+import { Bind, MatchBind, MatchRestBind, PredicateBind, PredicateRestBind } from "./bind";
 import { IsLiteral } from "./helpers/IsLiteral";
 import { Narrow } from "./helpers/narrow";
 import { Primitive } from "./helpers/primitives";
 
-type ResolveArray<TPattern extends unknown[]> = TPattern extends [PredicateRestBind<string, infer Type>]
+type ResolveArray<TPattern extends unknown[]> = TPattern extends never[]
+  ? []
+  : TPattern extends [any, ...infer Rest]
+  ? [any, ...ResolveArray<Rest>]
+  : TPattern extends [PredicateRestBind<string, infer Type>]
   ? TPattern extends (infer ArrayType)[]
     ? Narrow<Type, ArrayType>[]
-    : never
+    : []
   : TPattern extends [MatchRestBind<string, infer TMatch>]
   ? TPattern extends (infer ArrayType)[]
     ? Narrow<Resolve<TMatch>, ArrayType>[]
-    : never
+    : []
   : TPattern extends [infer First, ...infer Rest]
   ? [Resolve<First>, ...ResolveArray<Rest>]
+  : TPattern extends (infer T extends Bind<string, unknown>)[]
+  ? Resolve<T>[]
   : TPattern extends unknown[]
   ? TPattern
-  : never;
+  : [];
 
 type ResolveObject<TPattern extends Record<PropertyKey, unknown>> = {
   [Key in keyof TPattern]: Resolve<TPattern[Key]>;
 };
-
-// type Resolved = [ResolveObject<{ x: 1; y: 2 }>, ResolveObject<{ x: 3; y: 4 }>];
 
 export type Resolve<TPattern> = TPattern extends MatchBind<string, infer TMatch>
   ? Resolve<TMatch>
@@ -35,19 +39,15 @@ export type Resolve<TPattern> = TPattern extends MatchBind<string, infer TMatch>
 
 // type Resolved = Resolve<{ x: PredicateBind<"x", any> }>;
 
-type ResolveNonLiteralToNeverArray<TPattern extends unknown[]> = TPattern extends [PredicateRestBind<string, infer Type>]
-  ? TPattern extends (infer ArrayType)[]
-    ? Narrow<Type, ArrayType>[]
-    : never
-  : TPattern extends [MatchRestBind<string, infer TMatch>]
-  ? TPattern extends (infer ArrayType)[]
-    ? Narrow<ResolveNonLiteralToNever<TMatch>, ArrayType>[]
-    : never
+type ResolveNonLiteralToNeverArray<TPattern extends unknown[]> = TPattern extends [PredicateRestBind<infer Label, infer Predicate>]
+  ? [PredicateRestBind<Label, Predicate>]
+  : TPattern extends [MatchRestBind<infer Label, infer Match>]
+  ? [MatchRestBind<Label, Match>]
   : TPattern extends [infer First, ...infer Rest]
   ? [ResolveNonLiteralToNever<First>, ...ResolveNonLiteralToNeverArray<Rest>]
   : TPattern extends unknown[]
   ? TPattern
-  : never;
+  : [];
 
 type ResolveNonLiteralToNeverObject<TPattern extends Record<PropertyKey, unknown>> = {
   [Key in keyof TPattern]: ResolveNonLiteralToNever<TPattern[Key]>;

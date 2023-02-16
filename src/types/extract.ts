@@ -3,18 +3,20 @@ import { Bind, MatchBind, MatchRestBind, PredicateBind, PredicateRestBind, RestB
 import { Narrow, NarrowArray } from "./helpers/narrow";
 import { Primitive } from "./helpers/primitives";
 import { Resolve } from "./resolve";
-import { StringArrayPattern, StringLiteralPattern } from "./spec";
+import { StringArrayPattern, StringLiteralPattern } from "./pattern";
 import { MergeObjects } from "./helpers/MergeObjects";
 import { KVObject } from "./helpers/KVObject";
 import { Flatten } from "./helpers/flatten";
 import { EmptyObject } from "./helpers/EmptyObject";
 
+export type KVBindObject<K extends PropertyKey, V> = KVObject<K, V> & { __bind: true };
+
 type ExtractPredicateBind<TTest, TBind extends PredicateBind<string, unknown>> = TBind extends PredicateBind<infer Label, infer T>
-  ? KVObject<Label, Narrow<T, TTest>>
+  ? KVBindObject<Label, Narrow<T, TTest>>
   : EmptyObject;
 
 type ExtractMatchBind<TTest, TBind extends MatchBind<string, unknown>> = TBind extends MatchBind<infer Label, infer TMatch>
-  ? MergeObjects<KVObject<Label, Narrow<Resolve<TMatch>, TTest>>, ExtractBinds<TTest, TMatch>>
+  ? MergeObjects<KVBindObject<Label, Narrow<Resolve<TMatch>, TTest>>, ExtractBindsInteral<TTest, TMatch>>
   : EmptyObject;
 
 type ExtractBind<TTest, TBind extends Bind<string, unknown>> = TBind extends PredicateBind<string, unknown>
@@ -26,21 +28,21 @@ type ExtractBind<TTest, TBind extends Bind<string, unknown>> = TBind extends Pre
 type ExtractPredicateRestBind<
   TTest extends unknown[],
   TBind extends PredicateRestBind<string, unknown>
-> = TBind extends PredicateRestBind<infer Label, infer T> ? KVObject<Label, NarrowArray<T, TTest>> : EmptyObject;
+> = TBind extends PredicateRestBind<infer Label, infer T> ? KVBindObject<Label, NarrowArray<T, TTest>> : EmptyObject;
 
 type ExtractRestMatchBinds<TTest extends unknown[], TMatch> = TTest extends [infer First, ...infer Rest extends unknown[]]
   ? Rest extends never[]
-    ? ObjectToArrayObject<ExtractBinds<First, TMatch>>
-    : MergeArrayObjects<ObjectToArrayObject<ExtractBinds<First, TMatch>>, ExtractRestMatchBinds<Rest, TMatch>>
+    ? ObjectToArrayObject<ExtractBindsInteral<First, TMatch>>
+    : MergeArrayObjects<ObjectToArrayObject<ExtractBindsInteral<First, TMatch>>, ExtractRestMatchBinds<Rest, TMatch>>
   : TTest extends (infer T)[]
-  ? ArrayOfObjectsToObjectOfArrays<ExtractBinds<T, TMatch>[]>
+  ? ArrayOfObjectsToObjectOfArrays<ExtractBindsInteral<T, TMatch>[]>
   : EmptyObject;
 
 type ExtractMatchRestBind<TTest extends unknown[], TBind extends MatchRestBind<string, unknown>> = TBind extends MatchRestBind<
   infer Label,
   infer TMatch
 >
-  ? MergeObjects<KVObject<Label, NarrowArray<Resolve<TMatch>, TTest>>, ExtractRestMatchBinds<TTest, TMatch>>
+  ? MergeObjects<KVBindObject<Label, NarrowArray<Resolve<TMatch>, TTest>>, ExtractRestMatchBinds<TTest, TMatch>>
   : EmptyObject;
 
 type ExtractRestBind<TTest extends unknown[], TBind extends RestBind<string, TTest>> = TBind extends PredicateRestBind<
@@ -71,27 +73,50 @@ type ExtractStringBinds<TTest extends string, TPattern> = TPattern extends Strin
   ? ExtractStringLiteralBinds<TTest, TPattern>
   : EmptyObject;
 
-type ExtractArrayBinds<TTest extends unknown[], TPattern> = TPattern extends [infer PatternFirst, ...infer PatternRest]
+type ExtractArrayBindsHelper<TTest extends unknown[], TPattern> = TPattern extends [infer PatternFirst, ...infer PatternRest]
   ? PatternFirst extends RestBind<string, any>
     ? ExtractRestBind<TTest, PatternFirst>
     : TTest extends [infer TFirst, ...infer TRest]
     ? TRest extends never[]
-      ? ExtractBinds<TFirst, PatternFirst>
-      : MergeObjects<ExtractBinds<TFirst, PatternFirst>, ExtractArrayBinds<TRest, PatternRest>>
+      ? ExtractBindsInteral<TFirst, PatternFirst>
+      : MergeObjects<ExtractBindsInteral<TFirst, PatternFirst>, ExtractArrayBindsHelper<TRest, PatternRest>>
     : TTest extends (infer TArr)[]
-    ? MergeObjects<ExtractBinds<TArr, PatternFirst>, ExtractArrayBinds<TTest, PatternRest>>
-    : KVObject<"unknown", PatternFirst>
+    ? MergeObjects<ExtractBindsInteral<TArr, PatternFirst>, ExtractArrayBindsHelper<TTest, PatternRest>>
+    : KVBindObject<"unknown", PatternFirst>
   : EmptyObject;
 
-type ExtractObjectBindsHelper<TTest extends Record<PropertyKey, unknown>, TPattern> = {
-  [K in keyof TTest]: K extends keyof TPattern ? KVObject<K, ExtractBinds<TTest[K], TPattern[K]>> : EmptyObject;
+type ExtractArrayBindsReverseHelper<TTest extends unknown[], TPattern> = TPattern extends [
+  ...infer PatternRest,
+  infer PatternLast
+]
+  ? PatternLast extends RestBind<string, any>
+    ? ExtractRestBind<TTest, PatternLast>
+    : TTest extends [...infer TRest, infer TLast]
+    ? TRest extends never[]
+      ? ExtractBindsInteral<TLast, PatternLast>
+      : MergeObjects<ExtractBindsInteral<TLast, PatternLast>, ExtractArrayBindsHelper<TRest, PatternRest>>
+    : TTest extends (infer TArr)[]
+    ? MergeObjects<ExtractBindsInteral<TArr, PatternLast>, ExtractArrayBindsHelper<TTest, PatternRest>>
+    : KVBindObject<"unknown", PatternLast>
+  : EmptyObject;
+
+type ExtractArrayBinds<TTest extends unknown[], TPattern> = TPattern extends [infer PatternFirst, ...infer PatternRest]
+  ? PatternFirst extends RestBind<string, any>
+    ? ExtractArrayBindsReverseHelper<TTest, TPattern>
+    : ExtractArrayBindsHelper<TTest, TPattern>
+  : EmptyObject;
+
+export type ExtractObjectBindsHelper<TTest extends Record<PropertyKey, unknown>, TPattern> = {
+  [K in keyof TTest]: K extends keyof TPattern ? KVObject<K, ExtractBindsInteral<TTest[K], TPattern[K]>> : EmptyObject;
 };
 
 type ExtractObjectBinds<TTest extends Record<PropertyKey, unknown>, TPattern> = Flatten<
   ExtractObjectBindsHelper<TTest, TPattern>
 >;
 
-export type ExtractBinds<TTest, TPattern> = TPattern extends Bind<string, unknown>
+type Unbind<T> = Omit<T, "__bind">
+
+type ExtractBindsInteral<TTest, TPattern> = TPattern extends Bind<string, unknown>
   ? ExtractBind<TTest, TPattern>
   : TTest extends string
   ? ExtractStringBinds<TTest, TPattern>
@@ -103,3 +128,4 @@ export type ExtractBinds<TTest, TPattern> = TPattern extends Bind<string, unknow
   ? ExtractObjectBinds<TTest, TPattern>
   : EmptyObject;
 
+export type ExtractBinds<TTest, TPattern> = Unbind<ExtractBindsInteral<TTest, TPattern>>

@@ -27,5 +27,6 @@
   "rules": {
     "@typescript-eslint/consistent-type-definitions": ["warn","type"]
     // "@typescript-eslint/no-explicit-any": ["warn"]
-  }
+  },
+  "ignorePatterns" : ["jest.config.js"]
 }

@@ -1,4 +1,4 @@
-import { Pattern, PatternOrPredicateBind } from "./spec";
+import { Pattern, PatternOrPredicateBind } from "./pattern";
 
 export type BindTypes = "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | "any";
 

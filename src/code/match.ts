@@ -1,6 +1,6 @@
 import { AssertNever, NonExhaustiveError } from "../types/helpers/AssertNever";
 import { FallthroughMatches } from "../types/matcher";
-import { Pattern } from "../types/spec";
+import { Pattern } from "../types/pattern";
 import { HandlerFunc, matchPatterns, PatternListForMatch } from "./matcherEngine";
 
 export type MatchObject<TMatch, TReturn> = {

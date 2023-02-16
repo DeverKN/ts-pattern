@@ -61,3 +61,13 @@ type Test = Unionize2<{x:"a"|"b", b:"b"}>
 //   ^?
 
 // type narrowed = Narrow<unknown, string>
+
+const add = <T extends string | number>(x: T, y: T): T extends string ? string : T extends number ? number : never => {
+  if (typeof x === "string") {
+    const sum = x + y
+    return sum
+  } else if (typeof x === "number") {
+    const sum = x + y
+    return sum
+  }
+}
