@@ -1,28 +1,78 @@
 import { _ } from "../code/binds";
+import { flowMatch } from "../code/flowMatcher";
 import { match } from "../code/matcher";
+import { ExtractBindsFromTagged, ExtractObjectBindsHelper } from "../types/extract";
 import { AnyObject } from "../types/helpers/AnyObject";
 import { EmptyObject } from "../types/helpers/EmptyObject";
-import { MergeObjects } from "../types/helpers/MergeObjects";
+import { MergeUnionOfObjects } from "../types/helpers/flatten";
 import { Pattern } from "../types/pattern";
+import { Resolve } from "../types/resolve";
+import { GenericTag1 } from "./GenericTuple/GenericTag1";
+import { Tagged, Tag, Untag, SymbolForTagBase } from "./taggedUnion";
 
-export const SymbolForTag = Symbol("Tag");
-export type SymbolForTag = typeof SymbolForTag;
+const Identity = <T>(arg: T) => arg;
 
-export type TaggedTuple<TTag extends string, T extends unknown[]> = T & { [SymbolForTag]: TTag };
+type TupleCreator<T extends unknown[]> = (...args: T) => T;
 
-export type Tagged<TTag extends string, T extends AnyObject = EmptyObject> = MergeObjects<T, { [SymbolForTag]: TTag }>;
+// type Create = TupleCreator<[number, number]>
+
+// export const SymbolForTag = Symbol("Tag");
+// export type SymbolForTag = typeof SymbolForTag;
+
+// export const SymbolForTagBase = Symbol("TagBase");
+// export type SymbolForTagBase = typeof SymbolForTagBase;
+
+// export const SymbolForIsPattern = Symbol("IsPattern");
+// export type SymbolForIsPattern = typeof SymbolForIsPattern;
+
+// export type TaggedTuple<TTag extends string, T extends AnyArray | Pattern<AnyArray> = []> = T & { [SymbolForTag]: TTag };
+
+const TaggedPOJO = <TObject extends AnyObject, TTagKey extends keyof TObject, TTag = TObject[TTagKey]>(
+  tagKey: TTagKey,
+  tag: TTag
+) => {
+  return (obj: Omit<TObject, TTagKey>) => {
+    Object.assign(obj, {
+      [tagKey]: tag,
+    });
+  };
+};
+
+// export type TaggedObject<TTag extends string, T extends AnyObject = EmptyObject> = T extends EmptyObject
+//   ? { [SymbolForTag]: TTag }
+//   : HardMergeObjects<T, { [SymbolForTag]: TTag }>;
+
+// type TaggedPattern<TTag extends string, T = never> = {
+//   [SymbolForTag]: TTag;
+//   [SymbolForTagBase]: T;
+//   //[SymbolForIsPattern]: true;
+// };
+
+// type UntagHelper<T extends Tagged<string, unknown>> =
+// type AnyTagged<TTag extends string> = Tagged<TTag, T> | TaggedTuple<TTag, T>
 
 // type EmptyTagCreator<TTag extends string> = () => Tagged<TTag>;
-type TagCreator<TTag extends string, T extends AnyObject> = /*T extends EmptyObject
-  ? EmptyTagCreator<TTag>
-  : */<TInstance extends T | Pattern<T>>(...arg: T extends EmptyObject ? [] : [TInstance]) => Tagged<TTag, TInstance>;
+// type TaggedObjectCreator<TTag extends string, T extends AnyObject> = /*T extends EmptyObject
+//   ? EmptyTagCreator<TTag>
+//   : */ <TInstance extends T | Pattern<T>>(...arg: T extends EmptyObject ? [] : [TInstance]) => TaggedObject<TTag, TInstance>;
 
-export const Tag = <T extends Tagged<string, AnyObject>>(
-  tag: T extends Tagged<infer TTag extends string, AnyObject> ? TTag : never
-): T extends Tagged<infer TTag, infer TObj> ? TagCreator<TTag, Omit<T, SymbolForTag>> : never => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-  return ((arg: any) => Object.assign(tag, arg)) as any;
-};
+// type TaggedTupleCreator<TTag extends string, T extends AnyArray> = /*T extends EmptyObject
+//   ? EmptyTagCreator<TTag>
+//   : */ <TInstance extends T | Pattern<T>>(...arg: T extends [] ? [] : [TInstance]) => TaggedTuple<TTag, TInstance>;
+
+// export function Tag<T extends TaggedTuple<string, AnyArray>>(
+//   tag: T extends TaggedTuple<infer TTag extends string, AnyArray> ? TTag : never
+// ): T extends TaggedTuple<infer TTag, AnyArray> ? TaggedTupleCreator<TTag, Shift<T>> : never;
+
+// export function Tag<T extends TaggedObject<string, AnyObject>>(
+//   tag: T extends TaggedObject<infer TTag extends string, AnyObject> ? TTag : never
+// ): T extends TaggedObject<infer TTag, infer TObj> ? TaggedObjectCreator<TTag, Omit<T, SymbolForTag>> : never;
+
+// export function Tag<T extends Tagged<string, unknown>>(
+//   tag: T extends Tagged<infer TTag extends string, unknown> ? TTag : never
+// ): T extends Tagged<infer TTag, infer TBase> ? TaggedCreator<TTag, TBase> : never;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 // type BasicLeaf = EmptyObject;
 // type BasicNode = {
@@ -46,48 +96,69 @@ export const Tag = <T extends Tagged<string, AnyObject>>(
 //   return res;
 // };
 
-// type GenericLeaf<T> = Tagged<"GenericLeaf", EmptyObject>;
-// type GenericNode<T> = Tagged<
-//   "GenericNode",
-//   {
-//     value: T;
-//     left: GenericTree<T>;
-//     right: GenericTree<T>;
-//   }
-// >;
-
-// type GenericTree<T> = GenericLeaf<T> | GenericNode<T>;
-
 type None = Tagged<"None">;
-type Just<T extends Record<PropertyKey, unknown>> = Tagged<"Just", T>;
-type Maybe<T extends Record<PropertyKey, unknown>> = Just<T> | None;
+type Just<T> = Tagged<"Just", T>;
+type Maybe<T> = Just<T> | None;
+
+// const Just =
+//   <T>() =>
+//   <TInstance extends Untag<Just<T>>>(arg: TInstance) =>
+//     Tag<Just<T>>("Just")(arg);
+
+const None = Tag<None>("None");
+const Just =
+  <T>() =>
+  <TInstance extends Untag<Just<T>>>(arg: TInstance) =>
+    Tag<Just<T>>("Just")(arg);
+
+type Point = Tagged<"Point", [x: number, y: number]>;
+
+const Point = Tag<Point>("Point");
+
+const ZeroZero = Point([1, 2]);
+
+// type Test = Point extends TaggedTuple<any, any> ? true : false;
+// Extr
+// type Binds = ExtractBinds<[1, 2], [PredicateBind<"x", any>, PredicateBind<"y", any>]>;
+const moveForward = (point: Point) => {
+  match(point)
+    .against(Point([_("x"), _("y")]), ({ x, y }) => Point([x + 1, y + 1]))
+    .exhaustive();
+};
 
 // const JustString = Tag<Just<{ val: string }>>("Just")({ val: "test" });
 
-const None = Tag<None>("None");
-const Just = <T extends Record<PropertyKey, unknown>>(arg: T): Just<T> => {
-  // type InnerJust = Tagged<"Just", T>;
-  const JustStr = "Just"
-  const res =  Tag<Tagged<"Just", T>>(JustStr)(arg);
-  return res
-};
+// const None = Tag<None>("None");
+// const Just = <T>(arg: T): Just<T> => {
+//   // type InnerJust = Tagged<"Just", T>;
+//   return Tag<Just<T>>(JustStr)(arg);
+// };
 
-const MaybeString: Maybe<{ val: string }> = Just<{ val: string }>({ val: "dog" });
+// const MaybeString: Maybe<{ val: string }> = Just<{ val: string }>({ val: "dog" });
 
-type Leaf = Tagged<"Leaf">;
-type Node = Tagged<
-  "Node",
+type GenericLeaf = Tagged<"GenericLeaf", EmptyObject>;
+type GenericNode<T> = Tagged<
+  "GenericNode",
   {
-    value: string;
-    left: Tree;
-    right: Tree;
+    value: T;
+    left: GenericTree<T>;
+    right: GenericTree<T>;
   }
 >;
 
-type Tree = Leaf | Node;
+type GenericTree<T> = GenericLeaf | GenericNode<T>;
 
-const Leaf = Tag<Leaf>("Leaf");
-const Node = Tag<Node>("Node");
+const GenericLeaf = Tag<GenericLeaf>("GenericLeaf");
+const GenericNode = <T>(arg: Untag<GenericNode<T>>) => arg; //Tag<GenericNode<T>>("GenericNode")(arg);
+
+// const preOrderTraversal = <T>(tree: GenericTree<T>): string => {
+//   return match(tree)
+//     .against(GenericLeaf(), () => "")
+//     .against(GenericNode<T>({ value: _("val"), left: _("left"), right: _("right") }), ({ val, left, right }) => {
+//       return `${val},${preOrderTraversal(left)},${preOrderTraversal(right)}`;
+//     })
+//     .exhaustive();
+// };
 
 // type TaggedUnionPattern<TUnion extends Tagged<string, AnyObject>> = TUnion extends Tagged<infer Label extends string, AnyObject>
 //   ? Tagged<Label, Exclude<TUnion, SymbolForTag>>
@@ -169,11 +240,180 @@ const Node = Tag<Node>("Node");
 //   return res;
 // };
 
-const inOrderTraversal = (tree: Tree): string => {
+type NumberLeaf = Tagged<"NumberLeaf">;
+type NumberNode = Tagged<
+  "NumberNode",
+  {
+    value: number;
+    left: NumberTree;
+    right: NumberTree;
+  }
+>;
+
+type NumberTree = NumberLeaf | NumberNode;
+const NumberLeaf = Tag<NumberLeaf>("NumberLeaf");
+const NumberNode = Tag<NumberNode>("NumberNode");
+
+const NumberPattern = NumberNode({ value: _("value"), left: _("left"), right: _("right") });
+
+type EitherFake<A, B> = Tagged<"EitherFake", A | B>;
+
+// type TestNode = Kind<"Node", string>;
+
+// const GenericTag =
+//   <URI extends keyof URIToKind<unknown>, TagName extends UnknownHTK[SymbolForTag], UnknownHTK extends Tagged<string, unknown> = Kind<URI, unknown>>(tagName: TagName) =>
+//   <T>() =>
+//   <TInstance extends ParameterizedHKT | Pattern<ParameterizedHKT>, ParameterizedHKT = Kind<URI, T>>(instance: TInstance): Tagged<TagName, TInstance> => {
+//     // type HTKInstance = Kind<URI, T>
+//     // type InstanceTagName = HTKInstance[SymbolForTag]
+//     return Tag<UnknownHTK>(tagName)(instance);
+//   };
+
+declare module "./GenericTuple/GenericTag2" {
+  interface URIToKind2<A, B> {
+    "EitherFake": EitherFake<A, B>;
+  }
+}
+
+
+// const EitherFake = GenericTag2<"EitherFake">("EitherFake");
+
+type Leaf = Tagged<"Leaf">;
+type Node<T> = Tagged<
+  "Node",
+  {
+    value: T;
+    left: Tree<T>;
+    right: Tree<T>;
+  }
+>;
+
+type Tree<T> = Leaf | Node<T>;
+
+const Leaf = Tag<Leaf>("Leaf");
+const Node =
+  <T>() =>
+  <TInstance extends Untag<Node<T>>>(arg: TInstance) =>
+    Tag<Node<T>>("Node")(arg);
+// const Node = GenericTag<"Node">;
+
+// interface URIToKind<T> {
+//   __never__: never;
+// }
+
+const StringNode = Node<string>();
+
+const patternObj = { value: _("value"), left: _("left"), right: _("right") };
+// const I = Identity(patternObj);
+type PatternObjType = typeof patternObj;
+const Pattern = StringNode(patternObj);
+type StringTree = Tree<string>;
+type PatternType = typeof Pattern;
+type Pt = PatternType[SymbolForTagBase];
+// type TaggedPatternInstance = TaggedPattern<"Node", PatternObjType>;
+type Test = Pt extends Pattern<Tree<string>> ? true : false;
+// type ExtractedPattern = Extract<PatternType, TaggedPatternInstance>;
+
+type Extracted = ExtractBindsFromTagged<Tree<string>, PatternType>;
+
+type Err = MergeUnionOfObjects<
+  ExtractObjectBindsHelper<
+    { value: string; left: Tree<string>; right: Tree<string> },
+    { value: string; left: Tree<string>; right: Tree<string> }
+  >
+>;
+
+const inOrderTraversal = (tree: Tree<string>): string => {
   return match(tree)
     .against(Leaf(), () => "")
-    .against(Node({ value: _("value"), left: _("left"), right: _("right") }), ({ value, left, right }) => {
-      return inOrderTraversal(left) + value + inOrderTraversal(right);
+    .against(Node<string>()({ value: _("value"), left: _("left"), right: _("right") }), ({ value, left, right }) => {
+      return `${inOrderTraversal(left)}${value}${inOrderTraversal(right)}`;
     })
     .exhaustive();
 };
+
+type Either<A, B> = Left<A> | Right<B>;
+type Left<A> = Tagged<"Left", A>;
+type Right<B> = Tagged<"Right", B>;
+
+declare module "./GenericTuple/GenericTag1" {
+  interface URIToKind1<A> {
+    Left: Left<A>;
+    Right: Right<A>;
+  }
+}
+
+const Left = GenericTag1<"Left">("Left");
+const Right = GenericTag1<"Right">("Right");
+
+const StringOrNumber: Either<string, number> = Left<string>()("test");
+
+type User = Student | Teacher;
+type Student = Tagged<
+  "Student",
+  {
+    name: string;
+    age: number;
+    gpa: number;
+  }
+>;
+
+type Teacher = Tagged<
+  "Teacher",
+  {
+    name: string;
+    salary: number;
+    yearsOfExperience: number;
+  }
+>;
+
+const Student = Tag<Student>("Student");
+const Teacher = Tag<Teacher>("Teacher");
+
+const StudentPattern = Student({ name: _("name"), age: _, gpa: _("gpa") });
+type Resolved = Resolve<typeof StudentPattern>;
+
+const greetUser = (user: User) => {
+  match(user)
+    .against(Student({ name: _("name"), age: _, gpa: _("gpa") }), ({ name, gpa }) => `Hello ${name} you have a GPA of ${gpa}`)
+    .against(Teacher({ name: _("name"), salary: _, yearsOfExperience: _("years") }), ({ name, years }) => {
+      return `Hello ${name} congrats on ${years} years of service!`;
+    })
+    .exhaustive();
+};
+
+type List<T> = Empty | Cons<T>;
+type Empty = Tagged<"Empty">;
+type Cons<T> = Tagged<"Cons", [T, List<T>]>;
+
+declare module "./GenericTuple/GenericTag1" {
+  interface URIToKind1<A> {
+    Cons: Cons<A>;
+  }
+}
+
+
+const Empty = Tag<Empty>("Empty");
+const Cons = GenericTag1<"Cons">("Cons");
+
+const ConsNum = Cons<number>();
+const sum: (list: List<number>) => number = flowMatch<List<number>, number>()
+  .against(Empty(), () => 0)
+  .against(ConsNum([_("x"), _("xs")]), ({ x, xs }) => x + sum(xs))
+  .exhaustive();
+
+const Throw = (e: Error) => {
+  throw e
+}
+
+const unwrap = <T>(maybeVal: Maybe<T>) =>
+  match(maybeVal)
+    .against(None(), () => Throw(Error("Invalid: Attempted unwrap of None value")))
+    .against(Just<T>()(_("val")), ({ val }) => val)
+    .exhaustive();
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+const concat = <S extends string>(s: S) => <T extends string>(t: T): `${S}${T}` => s + t as any
+
+// const mapped = map(Just<string>()("test"), concat("pre"))
+// const unwrapped = unwrap(mapped)

@@ -1,4 +1,4 @@
-import { Bind, MatchBind, MatchRestBind, PredicateBind, PredicateRestBind } from "./bind";
+import { Bind, MatchBind, MatchRestBind, PredicateBind, PredicateRestBind, WildCard } from "./bind";
 import { IsLiteral } from "./helpers/IsLiteral";
 import { Narrow } from "./helpers/narrow";
 import { Primitive } from "./helpers/primitives";
@@ -56,6 +56,8 @@ type ResolveNonLiteralToNeverObject<TPattern extends Record<PropertyKey, unknown
 export type ResolveNonLiteralToNever<TPattern> = TPattern extends MatchBind<string, infer TMatch>
   ? Narrow<ResolveNonLiteralToNever<TMatch>, TPattern>
   : TPattern extends PredicateBind<string, infer Type>
+  ? Type
+  : TPattern extends WildCard<infer Type>
   ? Type
   : TPattern extends unknown[]
   ? ResolveNonLiteralToNeverArray<TPattern>

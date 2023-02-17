@@ -161,6 +161,7 @@ test("match empty list with match", () => {
     match([] as number[])
       .against([_("first"), _("rest").s], ({ first, rest }) => [first, rest])
       .against([], () => "empty")
+      .against(_, () => "rest")
       .exhaustive()
   ).toBe("empty");
 });
