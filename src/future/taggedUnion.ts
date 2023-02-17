@@ -1,13 +1,5 @@
-import { _ } from "../code/binds";
-import { flowMatch } from "../code/flowMatcher";
-import { match } from "../code/matcher";
-import { ExtractBindsFromTagged, ExtractObjectBindsHelper } from "../types/extract";
 import { AnyArray } from "../types/helpers/AnyArray";
-import { AnyObject } from "../types/helpers/AnyObject";
-import { EmptyObject } from "../types/helpers/EmptyObject";
-import { MergeUnionOfObjects } from "../types/helpers/flatten";
 import { Pattern } from "../types/pattern";
-import { Resolve } from "../types/resolve";
 
 export const SymbolForTag = Symbol("Tag");
 export type SymbolForTag = typeof SymbolForTag;

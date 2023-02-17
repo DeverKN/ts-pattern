@@ -3,6 +3,7 @@ import { FallthroughMatches } from "../types/matcher";
 import { Pattern } from "../types/pattern";
 import { HandlerFunc, matchPatterns, PatternListForMatch } from "./matcherEngine";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type FlowMatchObject<TBase, TMatch, TReturn> = {
   patterns: PatternListForMatch<TMatch, TReturn>;
 };
