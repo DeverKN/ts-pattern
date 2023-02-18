@@ -1,4 +1,3 @@
-import { AnyArray } from "../types/helpers/AnyArray";
 import { Pattern } from "../types/pattern";
 
 export const SymbolForTag = Symbol("Tag");
@@ -10,21 +9,19 @@ export type SymbolForTagBase = typeof SymbolForTagBase;
 export const SymbolForIsPattern = Symbol("IsPattern");
 export type SymbolForIsPattern = typeof SymbolForIsPattern;
 
-export type TaggedTuple<TTag extends string, T extends AnyArray | Pattern<AnyArray> = []> = T & { [SymbolForTag]: TTag };
+// type TaggedTuple<TTag extends string, T extends AnyArray | Pattern<AnyArray> = []> = T & { [SymbolForTag]: TTag };
 
 export type Tagged<TTag extends string, T = never> = {
   [SymbolForTag]: TTag;
   [SymbolForTagBase]: T;
-  // map: <U>(mapper: (arg: T) => U) => Tagged<TTag, U>;
-  //[SymbolForIsPattern]: false;
 };
 
-export type TaggedObject<TTag extends string, T extends Record<PropertyKey, unknown> = never> = {
-  [SymbolForTag]: TTag;
-  [SymbolForTagBase]: T;
-} & Readonly<{
-  [Key in keyof T]: T[Key];
-}>;
+// type TaggedObject<TTag extends string, T extends Record<PropertyKey, unknown> = never> = {
+//   [SymbolForTag]: TTag;
+//   [SymbolForTagBase]: T;
+// } & Readonly<{
+//   [Key in keyof T]: T[Key];
+// }>;
 
 type TOrPattern<T> = T | Pattern<T>;
 export type Untag<T extends Tagged<string, unknown>> = TOrPattern<T[SymbolForTagBase]>;
@@ -47,7 +44,7 @@ type NonEmptyTaggedCreator<TTag extends string, T> = /*T extends EmptyObject
 
 type EmptyTaggedCreator<TTag extends string> = () => /*TInstance extends T ?*/ Tagged<TTag>;
 
-export type TaggedCreator<TTag extends string, T> = [T] extends [never] ? EmptyTaggedCreator<TTag> : NonEmptyTaggedCreator<TTag, T>;
+type TaggedCreator<TTag extends string, T> = [T] extends [never] ? EmptyTaggedCreator<TTag> : NonEmptyTaggedCreator<TTag, T>;
 
 export function Tag<T extends Tagged<string, unknown>>(
   tag: T[SymbolForTag]

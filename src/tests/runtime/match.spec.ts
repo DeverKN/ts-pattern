@@ -1,23 +1,5 @@
 import { _ } from "../../code/binds";
 import { match } from "../../code/matcher";
-import { PredicateBind, PredicateRestBind } from "../../types/bind";
-import { FancyExclude, FancyExcludeV2 } from "../../types/nonEmptyArray";
-import { ResolveNonLiteralToNever } from "../../types/resolve";
-
-// const Teacher = TaggedCreator<"Teacher", Teacher>("Teacher");
-// const Student = TaggedCreator<"Student", Student>("Student");
-
-// type User = Tagged<typeof Teacher | typeof Student>;
-
-// test("match tagged union", () => {
-//   expect(
-//     match("test")
-//       .against("else", () => "else")
-//       .against("test", () => "test")
-//       .against(_, () => "rest")
-//       .exhaustive()
-//   ).toBe("test");
-// });
 
 test("match string literal", () => {
   expect(
@@ -81,8 +63,6 @@ test("split tuple literal", () => {
   ).toStrictEqual([1, 2]);
 });
 
-type Test = FancyExclude<[number, number], ResolveNonLiteralToNever<[PredicateBind<"one", any>, PredicateBind<"two", any>]>>;
-
 test("match partial tuple literal", () => {
   expect(
     match([1, 2] as [number, number])
@@ -102,9 +82,6 @@ test("tuple fallthrough wildcard", () => {
       .exhaustive()
   ).toBe("rest");
 });
-
-type Resolved = ResolveNonLiteralToNever<[number, number]>;
-type Test6 = FancyExcludeV2<[number, number], Resolved>;
 
 test("tuple fallthrough match", () => {
   expect(
@@ -154,14 +131,11 @@ test("match first and extract rest of list match", () => {
   ).toStrictEqual({ rest: [2, 3, 4, 5], label: "TWO" });
 });
 
-type Test3 = FancyExclude<number[], [2, PredicateRestBind<"rest", any>]>;
-
 test("match empty list with match", () => {
   expect(
     match([] as number[])
       .against([_("first"), _("rest").s], ({ first, rest }) => [first, rest])
       .against([], () => "empty")
-      .against(_, () => "rest")
       .exhaustive()
   ).toBe("empty");
 });
@@ -175,22 +149,6 @@ test("match and extract string with array string pattern match", () => {
       .exhaustive()
   ).toStrictEqual("there");
 });
-
-// type MatchBind<
-//   "name",
-//   (PredicateBind<"first", any> | PredicateBind<"last", any>)[],
-//   PatternOrPredicateBind<(PredicateBind<"first", any> | PredicateBind<"last", any>)[]>
-// >;
-
-// test("match and extract string with array string pattern match deep", () => {
-//   expect(
-//     match("hello there")
-//       .against(["hello ", is("name", [_("first"), _("last")])], () => "person")
-//       .against(["hello ", "there"], () => "there")
-//       .against(_, () => "falllthrough")
-//       .exhaustive()
-//   ).toStrictEqual("there");
-// });
 
 test("match and extract part of string with array string pattern match", () => {
   expect(

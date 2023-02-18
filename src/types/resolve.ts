@@ -57,6 +57,8 @@ export type ResolveNonLiteralToNever<TPattern> = TPattern extends MatchBind<stri
   ? Narrow<ResolveNonLiteralToNever<TMatch>, TPattern>
   : TPattern extends PredicateBind<string, infer Type>
   ? Type
+  : TPattern extends PredicateRestBind<infer Label, infer Type>
+  ? PredicateRestBind<Label, Type>
   : TPattern extends WildCard<infer Type>
   ? Type
   : TPattern extends unknown[]

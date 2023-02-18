@@ -8,7 +8,7 @@ import { MergeObjects } from "./helpers/MergeObjects";
 import { KVObject } from "./helpers/KVObject";
 import { Flatten } from "./helpers/flatten";
 import { EmptyObject } from "./helpers/EmptyObject";
-import { TaggedTuple, Tagged } from "../future/taggedUnion";
+import { Tagged } from "../future/taggedUnion";
 
 export type KVBindObject<K extends PropertyKey, V> = KVObject<K, V> & { __bind: true };
 
@@ -101,7 +101,7 @@ type ExtractArrayBindsReverseHelper<TTest extends unknown[], TPattern> = TPatter
     : KVBindObject<"unknown", PatternLast>
   : EmptyObject;
 
-type ExtractArrayBinds<TTest extends unknown[], TPattern> = TPattern extends [infer PatternFirst, ...infer PatternRest]
+type ExtractArrayBinds<TTest extends unknown[], TPattern> = TPattern extends [infer PatternFirst, ...unknown[]]
   ? PatternFirst extends RestBind<string, any>
     ? ExtractArrayBindsReverseHelper<TTest, TPattern>
     : ExtractArrayBindsHelper<TTest, TPattern>
@@ -117,14 +117,14 @@ type ExtractObjectBinds<TTest extends Record<PropertyKey, unknown>, TPattern> = 
 
 type Unbind<T> = Omit<T, "__bind">;
 
-type ExtractBindsFromTaggedTuple<T extends TaggedTuple<string, unknown>, TPattern> = T extends TaggedTuple<
-  infer Tag,
-  infer TTuple
->
-  ? TPattern extends TaggedTuple<Tag, infer TPatternTuple>
-    ? ExtractBindsInteral<TTuple, TPatternTuple>
-    : EmptyObject
-  : EmptyObject;
+// type ExtractBindsFromTaggedTuple<T extends TaggedTuple<string, unknown>, TPattern> = T extends TaggedTuple<
+//   infer Tag,
+//   infer TTuple
+// >
+//   ? TPattern extends TaggedTuple<Tag, infer TPatternTuple>
+//     ? ExtractBindsInteral<TTuple, TPatternTuple>
+//     : EmptyObject
+//   : EmptyObject;
 
 export type ExtractBindsFromTagged<T extends Tagged<string, unknown>, TPattern> = TPattern extends Tagged<
   infer Tag,
