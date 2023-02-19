@@ -11,7 +11,7 @@ import { KVPair, KVPairUnionToObject } from "./KVPair";
 // }
 
 export type AnyKey<T> = T extends T ? keyof T : never;
-export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+
 
 export type MergeUnionOfObjects<O> = {
   [Key in AnyKey<O>]: Extract<O, KVObject<Key, unknown>>[Key];

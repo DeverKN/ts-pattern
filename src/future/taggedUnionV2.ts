@@ -7,8 +7,9 @@ import { EmptyObject } from "../types/helpers/EmptyObject";
 import { MergeUnionOfObjects } from "../types/helpers/flatten";
 import { Pattern } from "../types/pattern";
 import { Resolve } from "../types/resolve";
-import { GenericTag1 } from "./GenericTuple/GenericTag1";
-import { Tagged, Tag, Untag, SymbolForTagBase } from "./taggedUnion";
+import { GenericTag1, GenericTags1 } from "./GenericTuple/GenericTag1";
+import { GenericTag2, GenericTags2 } from "./GenericTuple/GenericTag2";
+import { Tagged, Tag, Untag, SymbolForTagBase, Tags, Where } from "./taggedUnion";
 
 const Identity = <T>(arg: T) => arg;
 
@@ -271,50 +272,66 @@ type EitherFake<A, B> = Tagged<"EitherFake", A | B>;
 
 declare module "./GenericTuple/GenericTag2" {
   interface URIToKind2<A, B> {
-    "EitherFake": EitherFake<A, B>;
+    EitherFake: EitherFake<A, B>;
   }
 }
 
-
 // const EitherFake = GenericTag2<"EitherFake">("EitherFake");
 
-type Leaf = Tagged<"Leaf">;
-type Node<T> = Tagged<
-  "Node",
-  {
-    value: T;
-    left: Tree<T>;
-    right: Tree<T>;
+// type Leaf = Tagged<"Leaf">;
+// type Node<T> = Tagged<
+//   "Node",
+//   {
+//     value: T;
+//     left: Tree<T>;
+//     right: Tree<T>;
+//   }
+// >;
+
+// type Tree<T> = Leaf | Node<T>;
+
+type Tree<T> =  | Where<"Leaf"> 
+                | Where<"Node", { value: T; left: Tree<T>; right: Tree<T> }>;
+
+declare module "./GenericTuple/GenericTag1" {
+  interface URIToKind1<A> {
+    Tree: Tree<A>;
   }
->;
+}
 
-type Tree<T> = Leaf | Node<T>;
+const { Leaf, Node } = GenericTags1<"Tree">()("Leaf", "Node")(false, true);
 
-const Leaf = Tag<Leaf>("Leaf");
-const Node =
-  <T>() =>
-  <TInstance extends Untag<Node<T>>>(arg: TInstance) =>
-    Tag<Node<T>>("Node")(arg);
+// const Leaf = Tag<Leaf>("Leaf");
+// const Node =
+//   <T>() =>
+//   <TInstance extends Untag<Node<T>>>(arg: TInstance) =>
+//     Tag<Node<T>>("Node")(arg);
 // const Node = GenericTag<"Node">;
 
 // interface URIToKind<T> {
 //   __never__: never;
 // }
 
-const StringNode = Node<string>();
+// const StringNode = Node<string>();
+
+// const TestNode = Node<number>()({
+//   left: Leaf(),
+//   right: Leaf(),
+//   value: 5
+// })
 
 const patternObj = { value: _("value"), left: _("left"), right: _("right") };
 // const I = Identity(patternObj);
 type PatternObjType = typeof patternObj;
-const Pattern = StringNode(patternObj);
+// const Pattern = StringNode(patternObj);
 type StringTree = Tree<string>;
-type PatternType = typeof Pattern;
-type Pt = PatternType[SymbolForTagBase];
+// type PatternType = typeof Pattern;
+// type Pt = PatternType[SymbolForTagBase];
 // type TaggedPatternInstance = TaggedPattern<"Node", PatternObjType>;
-type Test = Pt extends Pattern<Tree<string>> ? true : false;
+// type Test = Pt extends Pattern<Tree<string>> ? true : false;
 // type ExtractedPattern = Extract<PatternType, TaggedPatternInstance>;
 
-type Extracted = ExtractBindsFromTagged<Tree<string>, PatternType>;
+// type Extracted = ExtractBindsFromTagged<Tree<string>, PatternType>;
 
 type Err = MergeUnionOfObjects<
   ExtractObjectBindsHelper<
@@ -323,7 +340,7 @@ type Err = MergeUnionOfObjects<
   >
 >;
 
-const inOrderTraversal = (tree: Tree<string>): string => {
+const inOrderTraversal = <T extends string | number>(tree: Tree<T>): string => {
   return match(tree)
     .against(Leaf(), () => "")
     .against(Node<string>()({ value: _("value"), left: _("left"), right: _("right") }), ({ value, left, right }) => {
@@ -332,43 +349,52 @@ const inOrderTraversal = (tree: Tree<string>): string => {
     .exhaustive();
 };
 
-type Either<A, B> = Left<A> | Right<B>;
-type Left<A> = Tagged<"Left", A>;
-type Right<B> = Tagged<"Right", B>;
+// type Either<A, B> = Left<A> | Right<B>;
+// type Left<A> = Tagged<"Left", A>;
+// type Right<B> = Tagged<"Right", B>;
 
-declare module "./GenericTuple/GenericTag1" {
-  interface URIToKind1<A> {
-    Left: Left<A>;
-    Right: Right<A>;
+type Either<A, B> = Where<"Left", A> | Where<"Right", B>;
+
+declare module "./GenericTuple/GenericTag2" {
+  interface URIToKind2<A, B> {
+    Either: Either<A, B>;
   }
 }
 
-const Left = GenericTag1<"Left">("Left");
-const Right = GenericTag1<"Right">("Right");
+const { Left, Right } = GenericTags2<"Either">();
 
-const StringOrNumber: Either<string, number> = Left<string>()("test");
+// const Left = GenericTag1<"Left">("Left");
+// const Right = GenericTag1<"Right">("Right");
 
-type User = Student | Teacher;
-type Student = Tagged<
-  "Student",
-  {
-    name: string;
-    age: number;
-    gpa: number;
-  }
->;
+const StringOrNumber: Either<string, number> = Left<string, number>()("test");
 
-type Teacher = Tagged<
-  "Teacher",
-  {
-    name: string;
-    salary: number;
-    yearsOfExperience: number;
-  }
->;
+// type User = Student | Teacher;
+// type Student = Tagged<
+//   "Student",
+//   {
+//     name: string;
+//     age: number;
+//     gpa: number;
+//   }
+// >;
 
-const Student = Tag<Student>("Student");
-const Teacher = Tag<Teacher>("Teacher");
+// type Teacher = Tagged<
+//   "Teacher",
+//   {
+//     name: string;
+//     salary: number;
+//     yearsOfExperience: number;
+//   }
+// >;
+
+// const Student = Tag<Student>("Student");
+// const Teacher = Tag<Teacher>("Teacher");
+
+type User =
+  | Where<"Student", { name: string; gpa: number; age: number }>
+  | Where<"Teacher", { name: string; salary: number; yearsOfExperience: number }>;
+
+const { Student, Teacher } = Tags<User>()("Student", "Teacher");
 
 const StudentPattern = Student({ name: _("name"), age: _, gpa: _("gpa") });
 type Resolved = Resolve<typeof StudentPattern>;
@@ -392,7 +418,6 @@ declare module "./GenericTuple/GenericTag1" {
   }
 }
 
-
 const Empty = Tag<Empty>("Empty");
 const Cons = GenericTag1<"Cons">("Cons");
 
@@ -403,8 +428,8 @@ const sum: (list: List<number>) => number = flowMatch<List<number>, number>()
   .exhaustive();
 
 const Throw = (e: Error) => {
-  throw e
-}
+  throw e;
+};
 
 const unwrap = <T>(maybeVal: Maybe<T>) =>
   match(maybeVal)
@@ -413,7 +438,58 @@ const unwrap = <T>(maybeVal: Maybe<T>) =>
     .exhaustive();
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-const concat = <S extends string>(s: S) => <T extends string>(t: T): `${S}${T}` => s + t as any
+// const concat =
+//   <S extends string>(s: S) =>
+//   <T extends string>(t: T): `${S}${T}` =>
+//     (s + t) as any;
 
 // const mapped = map(Just<string>()("test"), concat("pre"))
 // const unwrapped = unwrap(mapped)
+
+// type LeftTest<A> = A
+// type RightTest<B> = B
+
+// type JustTest<A> = Tagged<"Just", A>
+
+type URIMap<A> = {
+  // Left: LeftTest<A>,
+  // Right: RightTest<B>,
+  Just: Tagged<"Just", A>;
+  None: Tagged<"None">;
+};
+
+type URIs = keyof URIMap<unknown>;
+
+type IsGeneric<URI extends URIs> = URIMap<number>[URI] extends URIMap<string>[URI] ? false : true;
+
+type IsGenericTrue = IsGeneric<"Just">;
+type IsGenericFalse = IsGeneric<"None">;
+
+type URIMap2<A, B> = {
+  Left: Tagged<"Left", A>;
+  Right: Tagged<"Right", B>;
+  Either: Tagged<"Either", [A, B]>;
+};
+
+type CurriedURIMap<A> = <B>() => URIMap2<A, B>;
+
+// type Test5 = ReturnType<CurriedURIMap<string><>>
+type URIs2 = keyof URIMap2<unknown, unknown>;
+
+const SymbolForMissingGenericType = Symbol("MissingGenericType");
+type MissingGenericType = { [SymbolForMissingGenericType]: true };
+// type VariadicGeneric2Helper<URI extends URIs2, GenericsArray = unknown[]> = IsGeneric2<URI>
+// type VariadicGeneric2<URI extends URIs2, A = MissingGenericType, B = MissingGenericType> = IsGeneric2<URI> extends [true, true] ? URIMap2<A, B>[URI] :
+// IsGeneric2<URI> extends [true, false] ? URIMap2<A, unknown>[URI] :
+// IsGeneric2<URI> extends [false, true] ? URIMap2<unknown, A>[URI] :
+// IsGeneric2<URI> extends [false, false] ? URIMap2<unknown, unknown>[URI] : never
+
+// type IsGenericForA<URI extends URIs2> = URIMap2<number, unknown>[URI] extends URIMap2<string, unknown>[URI] ? false : true
+// type IsGenericForB<URI extends URIs2> = URIMap2<unknown, number>[URI] extends URIMap2<unknown, string>[URI] ? false : true
+// type IsGeneric2<URI extends URIs2> = [IsGenericForA<URI>, IsGenericForB<URI>]
+// type IsGenericForATrue = IsGenericForA<"Left">
+// type IsGenericForAFalse = IsGenericForA<"Right">
+
+// type LeftTest = VariadicGeneric2<"Left", string>
+// type RightTest = VariadicGeneric2<"Right", number>
+// type EitherTest = VariadicGeneric2<"Either", number>

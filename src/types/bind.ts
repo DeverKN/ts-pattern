@@ -29,8 +29,6 @@ export type PredicateWildCard<TPredicate> = {
   [SymbolForBind]: true 
 };
 
-
-
 export type TypedBind<TType, TTypeLabel extends BindTypes, TLabel extends string> = {
   type: TType;
   typeLabel: TTypeLabel;
@@ -76,10 +74,36 @@ export type MatchRestBind<TLabel extends string, TTest, TMatch extends Pattern<T
   [SymbolForBind]: true 
 };
 
-export type WildCard<T> = PredicateWildCard<T>
-export type Bind<Label extends string, T> = PredicateBind<Label, T> | MatchBind<Label, T, PatternOrPredicateBind<T>> | WildCard<T>;
+export type NonStrictTypeCheckFunction<T> = (arg: unknown | T) => boolean;
 
-export type RestBind<Label extends string, T> = PredicateRestBind<Label, T> | MatchRestBind<Label, T, PatternOrPredicateBind<T>>;
+export type NonStrictPredicateBind<TLabel extends string, TPredicate> = {
+  label: TLabel;
+  [Symbol.iterator]: () => IterableIterator<PredicateRestBind<TLabel, TPredicate>>;
+  predicate: NonStrictTypeCheckFunction<TPredicate>;
+  rest: PredicateRestBind<TLabel, TPredicate>;
+  s: PredicateRestBind<TLabel, TPredicate>;
+  bindType: "predicateBind";
+  [SymbolForBind]: true 
+};
+
+export type NonStrictPredicateRestBind<TLabel extends string, TPredicate> = {
+  label: TLabel;
+  predicate: NonStrictTypeCheckFunction<TPredicate>;
+  bindType: "predicateRestBind";
+  [SymbolForBind]: true 
+};
+
+export type NonStrictPredicateWildCard<TPredicate> = {
+  predicate: NonStrictTypeCheckFunction<TPredicate>;
+  bindType: "predicateWildCard";
+  [SymbolForBind]: true 
+};
+
+export type WildCard<T> = PredicateWildCard<T> | NonStrictPredicateWildCard<T>
+
+export type Bind<Label extends string, T> = PredicateBind<Label, T> | MatchBind<Label, T, PatternOrPredicateBind<T>> | NonStrictPredicateBind<Label, T> | WildCard<T>;
+
+export type RestBind<Label extends string, T> = PredicateRestBind<Label, T> | MatchRestBind<Label, T, PatternOrPredicateBind<T>> | NonStrictPredicateRestBind<Label, T>;
 
 // export type RestWildCard<T> = PredicateRestWildCard<T> | MatchRestWildCard<Label, T>;
 

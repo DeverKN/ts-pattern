@@ -16,6 +16,7 @@ export type Tagged<TTag extends string, T = never> = {
   [SymbolForTagBase]: T;
 };
 
+export type Where<TTag extends string, T = never> = Tagged<TTag, T>
 // type TaggedObject<TTag extends string, T extends Record<PropertyKey, unknown> = never> = {
 //   [SymbolForTag]: TTag;
 //   [SymbolForTagBase]: T;
@@ -58,3 +59,11 @@ export function Tag<T extends Tagged<string, unknown>>(
   }));
   return creator;
 }
+
+type TagCreatorObject<T extends Tagged<string, unknown>> = {
+  [TagName in T[SymbolForTag]]: TaggedCreator<TagName, Extract<T, Tagged<TagName, unknown>>[SymbolForTagBase]>
+}
+
+export type Tags = <T extends Tagged<string, unknown>>() => <TTags extends T[SymbolForTag]>(...tags: TTags[]) => TagCreatorObject<Extract<T, Tagged<TTags, unknown>>>
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+export const Tags: Tags = void 0 as any
