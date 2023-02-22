@@ -1,5 +1,6 @@
 import { Bind, MatchBind, PredicateBind, PredicateWildCard, RestBind, SymbolForBind } from "../types/bind";
 import { ExtractBinds } from "../types/extract";
+import { AnyObject } from "../types/helpers/AnyObject";
 import { NonExhaustiveError } from "../types/helpers/AssertNever";
 import { Primitive } from "../types/helpers/primitives";
 import {
@@ -62,6 +63,9 @@ export const matchPatterns = <T, TReturn>(match: T, patterns: PatternListForMatc
 };
 
 const matchBase = <T>(match: T, pattern: Pattern<T>): MatchResult => {
+  if (pattern === undefined) {
+    return [match === undefined, {}]
+  }
   if (isWildCard(pattern)) {
     return matchWildcard(match, pattern)
   } else if (isMatchBind(pattern)) {
@@ -180,8 +184,16 @@ const matchObject = <T extends Record<PropertyKey, unknown>>(match: T, pattern: 
   }
 };
 
+const getSymbols = (obj: AnyObject): [symbol, unknown][] => {
+  return Object.getOwnPropertySymbols(obj).map((symbolName) => [symbolName, obj[symbolName]])
+}
+
+const getSymbolsAndEntries = (obj: AnyObject) => {
+  return [...Object.entries(obj), ...getSymbols(obj)]
+}
+
 const matchCompleteObject = <T extends Record<PropertyKey, unknown>>(match: T, pattern: ObjectPattern<T>): MatchResult => {
-  return Object.entries(match).reduce<MatchResult>(
+  return getSymbolsAndEntries(match).reduce<MatchResult>(
     ([prevIsMatch, prevBinds], [key, val]) => {
       const [isMatch, binds] = matchBase(val, pattern[key]);
       if (!prevIsMatch) return [false, {}];
@@ -363,6 +375,7 @@ const matchStartingRestBind = <T, TArr extends T[]>(
 };
 
 const matchArray = <T, TArr extends T[]>(arr: TArr, pattern: ArrayPattern<TArr>): MatchResult => {
+  console.log({arr, pattern})
   const [first] = pattern;
   if (isRestBind(first)) {
     return matchStartingRestBind(arr, pattern);

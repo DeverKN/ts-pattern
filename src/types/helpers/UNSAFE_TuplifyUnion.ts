@@ -1,6 +1,6 @@
-import { UNSAFE_UnionToIntersection } from "./UNSAFE_UnionToIntersection";
+import { UnionToIntersection } from "./UNSAFE_UnionToIntersection";
 
-type LastOf<T> = UNSAFE_UnionToIntersection<T extends any ? () => T : never> extends () => infer R ? R : never;
+type LastOf<T> = UnionToIntersection<T extends any ? () => T : never> extends () => infer R ? R : never;
 
 // TS4.0+
 type Push<T extends any[], V> = [...T, V];

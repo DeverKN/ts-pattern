@@ -1,5 +1,6 @@
 import { _ } from "../../code/binds";
 import { match } from "../../code/matcher";
+import { InferGenericType, SymbolForTag, UNSAFE_TagsArray, Where } from "../../future/taggedUnion";
 
 test("match string literal", () => {
   expect(
@@ -221,4 +222,48 @@ test("extract binds from object literal", () => {
       .against(_, () => "rest")
       .exhaustive()
   ).toStrictEqual({ z: "z", label: "SUCCESS" });
+});
+
+test("match symbol on object literal", () => {
+  expect(
+    match({ [SymbolForTag]: 1 })
+      .against({ [SymbolForTag]: 0 }, () => "FAIL")
+      .against({ [SymbolForTag]: 1 }, () => "SUCCESS")
+      .against(_, () => "rest")
+      .exhaustive()
+  ).toBe("SUCCESS")
+});
+
+test("match algebraic data type", () => {
+  type Tree<T> = Where<"Leaf"> | Where<"Node", { left: Tree<T>; right: Tree<T>; value: T }>;
+
+  const { Leaf, Node } = UNSAFE_TagsArray<Tree<InferGenericType>>("Leaf", "Node");
+
+  const inOrderTraversal = (tree: Tree<string | number>): string =>
+    match(tree)
+      .against(Leaf(), () => " ")
+      .against(Node({ left: _("left"), right: _("right"), value: _("value") }), ({ left, right, value }) => {
+        return `${inOrderTraversal(left)}${value}${inOrderTraversal(right)}`;
+      })
+      .exhaustive();
+
+  const TestTree = Node({
+    left: Node({
+      left: Node({
+        left: Leaf(),
+        value: 0,
+        right: Leaf()
+      }),
+      value: 1,
+      right: Leaf(),
+    }),
+    value: 2,
+    right: Node({
+      left: Leaf(),
+      value: 3,
+      right: Leaf(),
+    }),
+  });
+
+  expect(inOrderTraversal(TestTree)).toBe(" 0 1 2 3 ")
 });

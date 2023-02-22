@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Narrow<T, U> = [T] extends [any] ? (U extends T ? U : T) : U;
+export type IsAny<T> = T extends number ? (T extends string ? true : false) : false;
+export type Narrow<T, U> = IsAny<T> extends true ? (U extends T ? U : T) : U;
 
 export type NarrowArray<T, UArr extends unknown[]> = UArr extends [infer UFirst, ...infer URest]
   ? URest extends never[]
