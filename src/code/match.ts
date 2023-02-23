@@ -31,16 +31,16 @@ export const against = <TMatch, TExistingReturn, TReturn, TPattern extends Patte
   };
 };
 
-export const isNonExhaustiveError = (maybeError: NonExhaustiveError | unknown): maybeError is NonExhaustiveError => {
+export const isNonExhaustiveError = (maybeError: NonExhaustiveError<unknown> | unknown): maybeError is NonExhaustiveError<unknown> => {
   return maybeError !== null && typeof maybeError === "object" && (maybeError as Record<string, unknown>)._nonExhaustive === null;
 };
 
 export const exhaustive = <TMatch, TReturn>(
   matchObj: MatchObject<TMatch, TReturn>
-): AssertNever<TMatch, TReturn, NonExhaustiveError> => {
+): AssertNever<TMatch, TReturn, NonExhaustiveError<TMatch>> => {
   const { match, patterns } = matchObj;
   const result = matchPatterns(match, patterns);
-  return result as AssertNever<TMatch, TReturn, NonExhaustiveError>;
+  return result as AssertNever<TMatch, TReturn, NonExhaustiveError<TMatch>>;
 };
 
 export const fallback = <TMatch, TFallbackReturn, TReturn>(

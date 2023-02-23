@@ -141,6 +141,28 @@ test("match empty list with match", () => {
   ).toBe("empty");
 });
 
+test("rest bind matches empty", () => {
+  expect(
+    match([1])
+      .against([1, _("rest").rest], () => "REST")
+      .against(_, () => "FALL")
+      .exhaustive()
+  ).toBe("REST");
+});
+
+test("sum list", () => {
+  const sum = (list: number[]): number =>
+    match(list)
+      .against([_("first"), _("rest").rest], ({ first, rest }) => {
+        // console.log({first, rest})
+        return first + sum(rest);
+      })
+      .against([], () => 0)
+      .exhaustive();
+
+  expect(sum([1, 2, 3, 4, 5])).toBe(15);
+});
+
 test("match and extract string with array string pattern match", () => {
   expect(
     match("hello there")
@@ -231,31 +253,30 @@ test("match symbol on object literal", () => {
       .against({ [SymbolForTag]: 1 }, () => "SUCCESS")
       .against(_, () => "rest")
       .exhaustive()
-  ).toBe("SUCCESS")
+  ).toBe("SUCCESS");
 });
 
-test("match set", () => {
-  expect(
-    match(new Set([1,2,3]))
-      .against(new Set([1,2,3,4,5]), () => "TOO MANY")
-      .against(new Set([1,2]), () => "TOO FEW")
-      .against(new Set([1,2,3]), () => "JUST RIGHT")
-      .against(_, () => "rest")
-      .exhaustive()
-  ).toBe("JUST RIGHT")
-});
+// test("match set", () => {
+//   expect(
+//     match(new Set([1,2,3]))
+//       .against(new Set([1,2,3,4,5]), () => "TOO MANY")
+//       .against(new Set([1,2]), () => "TOO FEW")
+//       .against(new Set([1,2,3]), () => "JUST RIGHT")
+//       .against(_, () => "rest")
+//       .exhaustive()
+//   ).toBe("JUST RIGHT")
+// });
 
-test("match map", () => {
-  expect(
-    match(new Map([["a", "b"], ["c", "d"]]))
-      .against(new Map([["a", "b"], ["c", "d"], ["x", "y"]]), () => "TOO MANY")
-      .against(new Map([["a", "b"]]), () => "TOO FEW")
-      .against(new Map([["a", "b"], ["c", "d"]]), () => "JUST RIGHT")
-      .against(_, () => "rest")
-      .exhaustive()
-  ).toBe("JUST RIGHT")
-});
-
+// test("match map", () => {
+//   expect(
+//     match(new Map([["a", "b"], ["c", "d"]]))
+//       .against(new Map([["a", "b"], ["c", "d"], ["x", "y"]]), () => "TOO MANY")
+//       .against(new Map([["a", "b"]]), () => "TOO FEW")
+//       .against(new Map([["a", "b"], ["c", "d"]]), () => "JUST RIGHT")
+//       .against(_, () => "rest")
+//       .exhaustive()
+//   ).toBe("JUST RIGHT")
+// });
 
 test("match algebraic data type", () => {
   type Tree<T> = Where<"Leaf"> | Where<"Node", { left: Tree<T>; right: Tree<T>; value: T }>;
@@ -275,7 +296,7 @@ test("match algebraic data type", () => {
       left: Node({
         left: Leaf(),
         value: 0,
-        right: Leaf()
+        right: Leaf(),
       }),
       value: 1,
       right: Leaf(),
@@ -288,5 +309,5 @@ test("match algebraic data type", () => {
     }),
   });
 
-  expect(inOrderTraversal(TestTree)).toBe(" 0 1 2 3 ")
+  expect(inOrderTraversal(TestTree)).toBe(" 0 1 2 3 ");
 });

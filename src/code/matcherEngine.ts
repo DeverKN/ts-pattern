@@ -296,7 +296,7 @@ const mergeMatchResults = (firstResult: MatchResult, secondResult: MatchResult):
 };
 
 const matchArrayHelper = <T, TArr extends T[]>(arr: TArr, pattern: GenericListPattern<T>): MatchResult => {
-  if (pattern.length === 0 || arr.length === 0) {
+  if (pattern.length === 0) {
     if (pattern.length === arr.length) {
       return [true, {}];
     } else {
@@ -304,12 +304,20 @@ const matchArrayHelper = <T, TArr extends T[]>(arr: TArr, pattern: GenericListPa
     }
   }
 
-  const [arrFirst, ...arrRest] = arr;
   const [patternFirst, ...patternRest] = pattern;
 
   if (isRestBind(patternFirst)) {
     return handleRestBind(arr, patternFirst);
   } else {
+    if (arr.length === 0) {
+      if (pattern.length === arr.length) {
+        return [true, {}];
+      } else {
+        return [false, {}];
+      }
+    }
+    
+    const [arrFirst, ...arrRest] = arr;
     return mergeMatchResults(matchBase(arrFirst, patternFirst), matchArrayHelper(arrRest, patternRest));
   }
 };
@@ -375,7 +383,7 @@ const matchStartingRestBind = <T, TArr extends T[]>(
 };
 
 const matchArray = <T, TArr extends T[]>(arr: TArr, pattern: ArrayPattern<TArr>): MatchResult => {
-  console.log({arr, pattern})
+  // console.log({arr, pattern})
   const [first] = pattern;
   if (isRestBind(first)) {
     return matchStartingRestBind(arr, pattern);
