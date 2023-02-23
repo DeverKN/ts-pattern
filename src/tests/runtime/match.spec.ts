@@ -234,6 +234,29 @@ test("match symbol on object literal", () => {
   ).toBe("SUCCESS")
 });
 
+test("match set", () => {
+  expect(
+    match(new Set([1,2,3]))
+      .against(new Set([1,2,3,4,5]), () => "TOO MANY")
+      .against(new Set([1,2]), () => "TOO FEW")
+      .against(new Set([1,2,3]), () => "JUST RIGHT")
+      .against(_, () => "rest")
+      .exhaustive()
+  ).toBe("JUST RIGHT")
+});
+
+test("match map", () => {
+  expect(
+    match(new Map([["a", "b"], ["c", "d"]]))
+      .against(new Map([["a", "b"], ["c", "d"], ["x", "y"]]), () => "TOO MANY")
+      .against(new Map([["a", "b"]]), () => "TOO FEW")
+      .against(new Map([["a", "b"], ["c", "d"]]), () => "JUST RIGHT")
+      .against(_, () => "rest")
+      .exhaustive()
+  ).toBe("JUST RIGHT")
+});
+
+
 test("match algebraic data type", () => {
   type Tree<T> = Where<"Leaf"> | Where<"Node", { left: Tree<T>; right: Tree<T>; value: T }>;
 

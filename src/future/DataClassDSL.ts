@@ -142,3 +142,9 @@ type ExampleGeneric<A extends StringType = Generic<>,
                                                                   | Right ${B}`;
 
 type Instance<URI extends keyof GenericDataClasses2<unknown, unknown>> = <T>() => GenericDataClasses2[URI]
+
+// type Tree = `Tree<T> =  | Leaf
+//                         | Node Tree<T>  Tree<T>`
+
+type List = `List<T> =  | []
+                        | _:_`

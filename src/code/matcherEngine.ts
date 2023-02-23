@@ -49,8 +49,8 @@ export const isBind = (arg: unknown | BindOrRestBindOrWildCard): arg is BindOrRe
   return arg !== null && arg !== undefined && hasOwnProperty(arg, SymbolForBind);
 };
 
-export const matchPatterns = <T, TReturn>(match: T, patterns: PatternListForMatch<T, TReturn>): TReturn | NonExhaustiveError => {
-  if (patterns.length === 0) return { _nonExhaustive: null };
+export const matchPatterns = <T, TReturn>(match: T, patterns: PatternListForMatch<T, TReturn>): TReturn | NonExhaustiveError<unknown> => {
+  if (patterns.length === 0) return { __nonExhaustive: null };
   const [firstPattern, ...restPatterns] = patterns;
   const [pattern, handlerFunc] = firstPattern;
   const [isMatch, binds] = matchBase(match, pattern);

@@ -17,9 +17,9 @@ export class FlowMatcher<TBase, TMatch, TReturn> {
     return new FlowMatcher(flowAgainst(this.#matchObj, pattern, handler))
   }
 
-  exhaustive(): (test: TBase) => [TMatch] extends [never] ? TReturn : NonExhaustiveError {
+  exhaustive(): (test: TBase) => [TMatch] extends [never] ? TReturn : NonExhaustiveError<TMatch> {
     return (test) => {
-      type ExhaustiveReturnType = [TMatch] extends [never] ? TReturn : NonExhaustiveError
+      type ExhaustiveReturnType = [TMatch] extends [never] ? TReturn : NonExhaustiveError<TMatch>
       const result = flowExhaustive(this.#matchObj)(test);
       if (isNonExhaustiveError(result)) {
         return result as ExhaustiveReturnType;

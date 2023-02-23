@@ -27,13 +27,13 @@ export class Matcher<TMatch, TReturn> {
     return new Matcher(against(this.#matchObj, pattern, handler))
   }
 
-  get exhaustive(): [TMatch] extends [never] ? () => TReturn : NonExhaustiveError {
-    type ExhaustiveReturnType = [TMatch] extends [never] ? () => TReturn : NonExhaustiveError
+  get exhaustive(): [TMatch] extends [never] ? () => TReturn : NonExhaustiveError<TMatch> {
+    type ExhaustiveReturnType = [TMatch] extends [never] ? () => TReturn : NonExhaustiveError<TMatch>
     const result = exhaustive(this.#matchObj);
     if (isNonExhaustiveError(result)) {
       return result as ExhaustiveReturnType;
     } else {
-      return (() => result) as ExhaustiveReturnType;
+      return (() => result) as unknown as ExhaustiveReturnType;
     }
   }
 
