@@ -1,6 +1,7 @@
 import { _ } from "../../code/binds";
 import { match } from "../../code/matcher";
-import { InferGenericType, SymbolForTag, UNSAFE_TagsArray, Where } from "../../future/taggedUnion";
+import { InferGenericType, SymbolForTag, Tagged, Tags, UNSAFE_TagsArray } from "../../future/taggedUnion";
+import { PredicateBind } from "../../types/bind";
 
 test("match string literal", () => {
   expect(
@@ -15,6 +16,7 @@ test("match string literal", () => {
 test("bind string literal", () => {
   expect(
     match("test")
+      // .against([_("str")] as [PredicateBind<"str", any>], () => "test")
       .against(_("str"), ({ str }) => str)
       .exhaustive()
   ).toBe("test");
@@ -153,11 +155,18 @@ test("rest bind matches empty", () => {
 test("sum list", () => {
   const sum = (list: number[]): number =>
     match(list)
-      .against([_("first"), _("rest").rest], ({ first, rest }) => {
-        // console.log({first, rest})
-        return first + sum(rest);
-      })
+      .against([_("first"), _("rest").rest], ({ first, rest }) => first + sum(rest))
       .against([], () => 0)
+      .exhaustive();
+
+  expect(sum([1, 2, 3, 4, 5])).toBe(15);
+});
+
+test("sum list, empty first", () => {
+  const sum = (list: number[]): number =>
+    match(list)
+      .against([], () => 0)
+      .against([_("first"), _("rest").rest], ({ first, rest }) => first + sum(rest))
       .exhaustive();
 
   expect(sum([1, 2, 3, 4, 5])).toBe(15);
@@ -279,7 +288,7 @@ test("match symbol on object literal", () => {
 // });
 
 test("match algebraic data type", () => {
-  type Tree<T> = Where<"Leaf"> | Where<"Node", { left: Tree<T>; right: Tree<T>; value: T }>;
+  type Tree<T> = Tagged<"Leaf"> | Tagged<"Node", { left: Tree<T>; right: Tree<T>; value: T }>;
 
   const { Leaf, Node } = UNSAFE_TagsArray<Tree<InferGenericType>>("Leaf", "Node");
 
@@ -310,4 +319,17 @@ test("match algebraic data type", () => {
   });
 
   expect(inOrderTraversal(TestTree)).toBe(" 0 1 2 3 ");
+});
+
+type List<T> = Tagged<"Nil"> | Tagged<"Cons", [T, List<T>]>;
+const { Nil, Cons } = Tags<List<InferGenericType>>()("Nil", "Cons");
+
+const sum = (list: List<number>): number =>
+  match(list)
+    .against(Nil(), () => 0)
+    .against(Cons(_("x"), _("xs")), ({ x, xs }) => x + sum(xs))
+    .exhaustive();
+
+test("sum ADT", () => {
+  expect(sum(Cons(15, Nil()))).toBe(15);
 });

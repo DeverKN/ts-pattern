@@ -296,7 +296,7 @@ type Tree<T> = Where<"Leaf"> | Where<"Node", { value: T; left: Tree<T>; right: T
 //   }
 // }
 
-const { Leaf, Node } = Tags<Tree<InferGenericType>>()("Leaf", "Node")
+const { Leaf, Node } = Tags<Tree<InferGenericType>>()("Leaf", "Node");
 
 // const Leaf = Tag<Leaf>("Leaf");
 // const Node =
@@ -408,9 +408,9 @@ const greetUser = (user: User) => {
     .exhaustive();
 };
 
-type List<T> = Empty | Cons<T>;
-type Empty = Tagged<"Empty">;
-type Cons<T> = Tagged<"Cons", [T, List<T>]>;
+// type List<T> = Empty | Cons<T>;
+// type Empty = Tagged<"Empty">;
+// type Cons<T> = Tagged<"Cons", [T, List<T>]>;
 
 // declare module "./GenericTuple/GenericTag1" {
 //   interface URIToKind1<A> {
@@ -419,9 +419,9 @@ type Cons<T> = Tagged<"Cons", [T, List<T>]>;
 // }
 
 // const Empty = Tag<Empty>("Empty");
-const { Cons, Empty } = Tags<List<InferGenericType>>()("Cons", "Empty");
+// const { Cons, Empty } = Tags<List<InferGenericType>>()("Cons", "Empty");
 
-const ConsNum = Cons(1, Empty());
+// const ConsNum = Cons(1, Empty());
 // const sum: (list: List<number>) => number = flowMatch<List<number>, number>()
 //   .against(Empty(), () => 0)
 //   .against(ConsNum(_("x"), _("xs")), ({ x, xs }) => x + sum(xs))

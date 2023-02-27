@@ -4,8 +4,9 @@ Excluding
 
 */
 
-import { PredicateRestBind, RestBind } from "../types/bind";
+import { RestBind } from "../types/bind";
 import { AnyArray } from "../types/helpers/AnyArray";
+import { ArrayVals } from "../types/helpers/ArrayVals";
 
 const SymbolForNotNever: unique symbol = Symbol("NotNever");
 type DefinitelyNotNever = {
@@ -87,17 +88,47 @@ export type FancyExclude<T, U> = T extends AnyArray ? (U extends AnyArray ? Arra
 
 // type Test = HasRestBind<[number, RestBind<string, number>]>;
 // type Test1 = HasRestBind<[never, never]>
-type NotNever = MapNeverToDefinitelyNotNever<[never, never, any]>;
-type Test = FancyExclude<[number, number], [never, never]>;
+// type NotNever = MapNeverToDefinitelyNotNever<[never, never, any]>;
+// type Test = FancyExclude<[number, number], [never, never]>;
 
-type ArrayType<T extends AnyArray> = T extends (infer TArr)[] ? TArr : never;
+// type ArrayType<T extends AnyArray> = T extends (infer TArr)[] ? TArr : never;
 
-type Test6 = FancyExclude<number[], [any, PredicateRestBind<"rest", any>]>;
-type Test7 = ArrayExcludeHelperForwards<number, [any, PredicateRestBind<"rest", any>], ["Fall"]>;
+// type Test6 = FancyExclude<number[], [any, PredicateRestBind<"rest", any>]>;
+// type Test7 = ArrayExcludeHelperForwards<number, [any, PredicateRestBind<"rest", any>], ["Fall"]>;
 
 // type Test2 = [any] extends [any] ? "true" : "false";
 type IsAny<T> = MaybeTrue<T extends never ? (T extends true ? true : false) : false>;
 type MaybeTrue<T extends boolean> = [T] extends [false] ? false : true;
+
+type IsTuple<T extends AnyArray> = T extends (infer ArrType)[] ? (ArrType[] extends T ? false : true) : false;
+type False = IsTuple<number[]>;
+//    ^? type False = false
+type True = IsTuple<[number, number]>;
+//    ^? type True = true
+
+type ExcludeEmpty<T extends AnyArray, U extends AnyArray> = IsTuple<T> extends true ? Exclude<T, U> : ExcludeEmptyHelper<T, U>;
+
+type ExcludeEmptyHelper<T extends AnyArray, U extends AnyArray> = T extends (infer TArr)[]
+  ? U extends []
+    ? [TArr, ...ArrayVals<T>[]]
+    : U extends [infer UFirst, ...infer URest]
+    ? [] | [UFirst, ...ExcludeEmptyHelper<T, URest>]
+    : never
+  : never;
+
+type Test1 = ExcludeEmpty<number[], []>;
+//    ^? type Test1 = [number, ...number[]]
+type Test2 = ExcludeEmpty<number[], [number]>;
+//    ^? type Test2 = [] | [number, number, ...number[]]
+type Test3 = ExcludeEmpty<number[], [number, number]>;
+//    ^? type Test3 = [] | [number] | [number, number, number, ...number[]]
+type Test4 = ExcludeEmpty<[number, number], [number, number]>;
+//    ^? type Test4 = never
+type Test5 = ExcludeEmpty<[number, number], [number]>;
+//    ^? type Test5 = [number, number]
+
+type Test6 = FancyExclude<number[], []>;
+//    ^? type Test6 = [number, ...number[]]
 
 // type Yes = IsAny<any>
 // type No1 = IsAny<never>

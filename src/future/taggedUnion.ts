@@ -16,11 +16,11 @@ export type Tagged<TTag extends string, T = never> = {
   [SymbolForTagBase]: T;
 };
 
-export type Where<TTag extends string, T = never> = [T] extends [never]
-  ? Tagged<TTag, T>
-  : T extends [unknown]
-  ? never
-  : Tagged<TTag, T>;
+// export type Where<TTag extends string, T = never> = [T] extends [never]
+//   ? Tagged<TTag, T>
+//   : T extends [unknown]
+//   ? never
+//   : Tagged<TTag, T>;
 
 type TOrPattern<T> = T | Pattern<T>;
 export type Untag<T extends Tagged<string, unknown>> = T[SymbolForTagBase];
@@ -81,16 +81,22 @@ export type Tags = <T extends Tagged<string, unknown>>() => <TTags extends T[Sym
   ...tags: TTags[]
 ) => TagCreatorObject<Extract<T, Tagged<TTags, unknown>>>;
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-export const Tags: Tags = <T extends Tagged<string, unknown>>() => <TTags extends T[SymbolForTag]>(
-  ...tags: TTags[]
-): TagCreatorObject<Extract<T, Tagged<TTags, unknown>>> => {
-  return Object.fromEntries(tags.map((tagName) => [tagName, Tag(tagName)])) as TagCreatorObject<Extract<T, Tagged<TTags, unknown>>>
-}
+export const Tags: Tags =
+  <T extends Tagged<string, unknown>>() =>
+  <TTags extends T[SymbolForTag]>(...tags: TTags[]): TagCreatorObject<Extract<T, Tagged<TTags, unknown>>> => {
+    return Object.fromEntries(tags.map((tagName) => [tagName, Tag(tagName)])) as TagCreatorObject<
+      Extract<T, Tagged<TTags, unknown>>
+    >;
+  };
 
-export type UNSAFE_TagsArray = <T extends Tagged<string, unknown>>(...tags: UNSAFE_TuplifyUnion<T[SymbolForTag]>) => TagCreatorObject<T>;
+export type UNSAFE_TagsArray = <T extends Tagged<string, unknown>>(
+  ...tags: UNSAFE_TuplifyUnion<T[SymbolForTag]>
+) => TagCreatorObject<T>;
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-export const UNSAFE_TagsArray: UNSAFE_TagsArray = <T extends Tagged<string, unknown>>(...tags: UNSAFE_TuplifyUnion<T[SymbolForTag]>) => {
-  return Object.fromEntries(tags.map((tagName) => [tagName, Tag(tagName as string)])) as TagCreatorObject<T>
-}
+export const UNSAFE_TagsArray: UNSAFE_TagsArray = <T extends Tagged<string, unknown>>(
+  ...tags: UNSAFE_TuplifyUnion<T[SymbolForTag]>
+) => {
+  return Object.fromEntries(tags.map((tagName) => [tagName, Tag(tagName as string)])) as TagCreatorObject<T>;
+};
 
 export type InferGenericType = unknown;

@@ -174,34 +174,34 @@ export type FancyExclude<T, U> = U extends unknown[]
   
 // type Test = ExtendsAll<string | number, number>;
 
-type Excluded = FancyExcludeArray<[number, number], [number, RestBind<string, number>]>;
+// type Excluded = FancyExcludeArray<[number, number], [number, RestBind<string, number>]>;
 
-type Resolved2 = ResolveNonLiteralToNever<[PredicateBind<"first", any>, PredicateRestBind<"rest", any>]>;
-type Test = Extends<Resolved2, [RestBind<string, any>, ...any[]] | [...any[], RestBind<string, any>]>;
+// type Resolved2 = ResolveNonLiteralToNever<[PredicateBind<"first", any>, PredicateRestBind<"rest", any>]>;
+// type Test = Extends<Resolved2, [RestBind<string, any>, ...any[]] | [...any[], RestBind<string, any>]>;
 
-// type Test2 = Extends<[Exclude<any, Resolved2>], [never]>
+// // type Test2 = Extends<[Exclude<any, Resolved2>], [never]>
 
-type ExcludeThree = FancyExclude<number[], Resolved2>;
+// type ExcludeThree = FancyExclude<number[], Resolved2>;
 
-const SymbolForFail = Symbol("fail");
-type __INTERNAL__Fail = typeof SymbolForFail;
+// const SymbolForFail = Symbol("fail");
+// type __INTERNAL__Fail = typeof SymbolForFail;
 
-type FancyExcludeArrayV3Helper<T extends unknown[], U extends unknown[]> = T extends (infer TArr)[]
-  ? U extends [infer First, ...infer Rest]
-    ? StrictExtends : TArr extends First
-      ? FancyExcludeArrayV3Helper<T, Rest> extends unknown[]
-        ? [TArr, ...FancyExcludeArrayV3Helper<T, Rest>]
-        : __INTERNAL__Fail
-      : __INTERNAL__Fail
-    : __INTERNAL__Fail
-  : __INTERNAL__Fail;
+// type FancyExcludeArrayV3Helper<T extends unknown[], U extends unknown[]> = T extends (infer TArr)[]
+//   ? U extends [infer First, ...infer Rest]
+//     ? StrictExtends : TArr extends First
+//       ? FancyExcludeArrayV3Helper<T, Rest> extends unknown[]
+//         ? [TArr, ...FancyExcludeArrayV3Helper<T, Rest>]
+//         : __INTERNAL__Fail
+//       : __INTERNAL__Fail
+//     : __INTERNAL__Fail
+//   : __INTERNAL__Fail;
 
-type IsAny<T> = MaybeTrue<T extends never & boolean ? true : false>;
+// type IsAny<T> = MaybeTrue<T extends never & boolean ? true : false>;
 
-type StrictExtends<T, U> = T extends U ? (IsAny<T> extends true ? (IsAny<U> extends true ? true : false) : true) : false;
+// type StrictExtends<T, U> = T extends U ? (IsAny<T> extends true ? (IsAny<U> extends true ? true : false) : true) : false;
 
-type StrictExtendsTest = StrictExtends<true, true>
+// type StrictExtendsTest = StrictExtends<true, true>
 
-type FancyExcludeArrayV3<T extends unknown[], U extends unknown[]> = FancyExcludeArrayV3Helper<T, U> extends unknown[]
-  ? Shift<FancyExcludeArrayV3Helper<T, U>>
-  : Exclude<Test, U>;
+// type FancyExcludeArrayV3<T extends unknown[], U extends unknown[]> = FancyExcludeArrayV3Helper<T, U> extends unknown[]
+//   ? Shift<FancyExcludeArrayV3Helper<T, U>>
+//   : Exclude<Test, U>;
