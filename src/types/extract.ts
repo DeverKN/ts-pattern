@@ -8,7 +8,7 @@ import { MergeObjects } from "./helpers/MergeObjects";
 import { KVObject } from "./helpers/KVObject";
 import { Flatten } from "./helpers/flatten";
 import { EmptyObject } from "./helpers/EmptyObject";
-import { Tagged } from "../future/taggedUnion";
+import { SymbolForTagBase, Tagged } from "../future/taggedUnion";
 
 export type KVBindObject<K extends PropertyKey, V> = KVObject<K, V> & { __bind: true };
 
@@ -115,7 +115,7 @@ type ExtractObjectBinds<TTest extends Record<PropertyKey, unknown>, TPattern> = 
   ExtractObjectBindsHelper<TTest, TPattern>
 >;
 
-type Unbind<T> = Omit<T, "__bind">;
+export type Unbind<T> = Omit<T, "__bind">;
 
 // type ExtractBindsFromTaggedTuple<T extends TaggedTuple<string, unknown>, TPattern> = T extends TaggedTuple<
 //   infer Tag,
@@ -128,10 +128,10 @@ type Unbind<T> = Omit<T, "__bind">;
 
 export type ExtractBindsFromTagged<T extends Tagged<string, unknown>, TPattern> = TPattern extends Tagged<
   infer Tag,
-  infer TPatternTuple
+  infer TPatternBase
 >
-  ? Extract<T, Tagged<Tag, unknown>> extends Tagged<Tag, infer TTuple>
-    ? ExtractBindsInteral<TTuple, TPatternTuple>
+  ? Extract<T, Tagged<Tag, unknown>> extends Tagged<Tag, unknown>
+    ? ExtractBindsInteral<Extract<T, Tagged<Tag, unknown>>[SymbolForTagBase], TPatternBase>
     : EmptyObject
   : EmptyObject;
 
