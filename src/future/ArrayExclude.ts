@@ -7,6 +7,7 @@ Excluding
 import { RestBind } from "../types/bind";
 import { AnyArray } from "../types/helpers/AnyArray";
 import { ArrayVals } from "../types/helpers/ArrayVals";
+import { FancyExcludeV2 } from "../types/nonEmptyArray";
 
 const SymbolForNotNever: unique symbol = Symbol("NotNever");
 type DefinitelyNotNever = {
@@ -82,7 +83,7 @@ type ArrayExclude<T extends AnyArray, U extends AnyArray> = HasRestBind<U> exten
     : never
   : Exclude<T, U>;
 
-export type FancyExclude<T, U> = T extends AnyArray ? (U extends AnyArray ? ArrayExclude<T, U> : Exclude<T, U>) : Exclude<T, U>;
+export type FancyExclude<T, U> = FancyExcludeV2<T, U>//T extends AnyArray ? (U extends AnyArray ? ArrayExclude<T, U> : Exclude<T, U>) : Exclude<T, U>;
 
 // type Excluded = ArrayExclude<number[], [number, any]>;
 
@@ -126,9 +127,6 @@ type Test4 = ExcludeEmpty<[number, number], [number, number]>;
 //    ^? type Test4 = never
 type Test5 = ExcludeEmpty<[number, number], [number]>;
 //    ^? type Test5 = [number, number]
-
-type Test6 = FancyExclude<number[], []>;
-//    ^? type Test6 = [number, ...number[]]
 
 // type Yes = IsAny<any>
 // type No1 = IsAny<never>

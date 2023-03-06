@@ -2,6 +2,7 @@
 import { Bind, PredicateBind, PredicateWildCard, RestBind } from "./bind";
 import { Primitive } from "./helpers/primitives";
 import { AdvancedArrayPattern } from "../future/AdvancedArrayPatterns";
+import { ArrayVals } from "./helpers/ArrayVals";
 
 export const ObjectRestSymbol = Symbol("objectRest");
 
@@ -13,25 +14,25 @@ export type StringPattern<T extends string> = StringLiteralPattern<T> | StringAr
 
 type EmptyArrayPattern = [];
 
-// export type GenericListPattern<T> = (T | Bind<string, T> | RestBind<string, T>)[];
+export type GenericListPattern<T> = (T | Bind<string, T> | RestBind<string, T>)[];
 
-// type RestStartListPattern<TArr> = [TArr | RestBind<string, TArr> | Bind<string, TArr>, ...(TArr | Bind<string, TArr>)[]];
-// type RestEndListPattern<TArr> = [...(TArr | Bind<string, TArr>)[], TArr | Bind<string, TArr> | RestBind<string, TArr>];
-// type ListPatternHelper<T extends unknown[]> = T extends (infer TArr)[]
-//   ? RestStartListPattern<TArr> | RestEndListPattern<TArr>
-//   : never;
+type RestStartListPattern<TArr> = [TArr | RestBind<string, TArr> | Bind<string, TArr>, ...(TArr | Bind<string, TArr>)[]];
+type RestEndListPattern<TArr> = [...(TArr | Bind<string, TArr>)[], TArr | Bind<string, TArr> | RestBind<string, TArr>];
+type ListPatternHelper<T extends unknown[]> = T extends (infer TArr)[]
+  ? RestStartListPattern<TArr> | RestEndListPattern<TArr>
+  : never;
 
-// type ArrayPatternHelper<T extends unknown[]> = T extends never[]
-//   ? EmptyArrayPattern
-//   : T extends [infer First, ...infer Rest]
-//   ? Rest extends never[]
-//     ? [Pattern<First>] | [RestBind<string, ArrayVals<T>>]
-//     : [Pattern<First>, ...ArrayPatternHelper<Rest>] | [RestBind<string, ArrayVals<T>>]
-//   : T extends unknown[]
-//   ? ListPatternHelper<T>
-//   : never;
+type ArrayPatternHelper<T extends unknown[]> = T extends never[]
+  ? EmptyArrayPattern
+  : T extends [infer First, ...infer Rest]
+  ? Rest extends never[]
+    ? [Pattern<First>] | [RestBind<string, ArrayVals<T>>]
+    : [Pattern<First>, ...ArrayPatternHelper<Rest>] | [RestBind<string, ArrayVals<T>>]
+  : T extends unknown[]
+  ? ListPatternHelper<T>
+  : never;
 
-export type ArrayPattern<T extends unknown[]> = T | AdvancedArrayPattern<T>//ArrayPatternHelper<T>;
+export type ArrayPattern<T extends unknown[]> = T | ArrayPatternHelper<T>;
 
 export type TotalObjectPattern<T extends Record<PropertyKey, unknown>> = {
   [Key in keyof T]: Pattern<T[Key]>;

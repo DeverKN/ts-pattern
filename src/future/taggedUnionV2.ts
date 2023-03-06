@@ -7,7 +7,7 @@ import { MergeUnionOfObjects } from "../types/helpers/flatten";
 import { Resolve } from "../types/resolve";
 import { GenericTag1, GenericTags1 } from "./GenericTuple/GenericTag1";
 import { GenericTags2 } from "./GenericTuple/GenericTag2";
-import { Tagged, Tag, Untag, Tags, Where, TaggedCreator, InferGenericType, UNSAFE_TagsArray } from "./taggedUnion";
+import { Tagged, Tag, Untag, Tags, TaggedCreator, InferGenericType, UNSAFE_TagsArray, TagsWithEmptyConstructors } from "./taggedUnion";
 
 const Identity = <T>(arg: T) => arg;
 
@@ -288,7 +288,7 @@ declare module "./GenericTuple/GenericTag2" {
 
 // type Tree<T> = Leaf | Node<T>;
 
-type Tree<T> = Where<"Leaf"> | Where<"Node", { value: T; left: Tree<T>; right: Tree<T> }>;
+type Tree<T> = Tagged<"Leaf"> | Tagged<"Node", { value: T; left: Tree<T>; right: Tree<T> }>;
 
 // declare module "./GenericTuple/GenericTag1" {
 //   interface URIToKind1<A> {
@@ -296,8 +296,10 @@ type Tree<T> = Where<"Leaf"> | Where<"Node", { value: T; left: Tree<T>; right: T
 //   }
 // }
 
-const { Leaf, Node } = Tags<Tree<InferGenericType>>()("Leaf", "Node");
+const { Leaf, Node } = TagsWithEmptyConstructors<Tree<InferGenericType>>()("Node","Leaf")(true, false);
 
+// const test = Leaf()
+// const 
 // const Leaf = Tag<Leaf>("Leaf");
 // const Node =
 //   <T>() =>
@@ -342,7 +344,7 @@ const { Leaf, Node } = Tags<Tree<InferGenericType>>()("Leaf", "Node");
 
 const inOrderTraversal = <T extends string | number>(tree: Tree<T>): string => {
   return match(tree)
-    .against(Leaf(), () => "")
+    .against(Leaf, () => "")
     .against(Node({ value: _("value"), left: _("left"), right: _("right") }), ({ value, left, right }) => {
       return `${inOrderTraversal(left)}${value}${inOrderTraversal(right)}`;
     })
@@ -353,7 +355,7 @@ const inOrderTraversal = <T extends string | number>(tree: Tree<T>): string => {
 // type Left<A> = Tagged<"Left", A>;
 // type Right<B> = Tagged<"Right", B>;
 
-type Either<A, B> = Where<"Left", A> | Where<"Right", B>;
+type Either<A, B> = Tagged<"Left", A> | Tagged<"Right", B>;
 
 // declare module "./GenericTuple/GenericTag2" {
 //   interface URIToKind2<A, B> {
@@ -391,8 +393,8 @@ const StringOrNumber: Either<string, number> = Left("test");
 // const Teacher = Tag<Teacher>("Teacher");
 
 type User =
-  | Where<"Student", { name: string; gpa: number; age: number }>
-  | Where<"Teacher", { name: string; salary: number; yearsOfExperience: number }>;
+  | Tagged<"Student", { name: string; gpa: number; age: number }>
+  | Tagged<"Teacher", { name: string; salary: number; yearsOfExperience: number }>;
 
 const { Student, Teacher } = Tags<User>()("Student", "Teacher");
 
