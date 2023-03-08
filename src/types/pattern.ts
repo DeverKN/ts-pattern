@@ -1,7 +1,6 @@
 // import { ArrayVals } from "./helpers/ArrayVals";
 import { Bind, PredicateBind, PredicateWildCard, RestBind } from "./bind";
 import { Primitive } from "./helpers/primitives";
-import { AdvancedArrayPattern } from "../future/AdvancedArrayPatterns";
 import { ArrayVals } from "./helpers/ArrayVals";
 
 export const ObjectRestSymbol = Symbol("objectRest");

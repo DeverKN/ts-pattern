@@ -62,7 +62,7 @@ export const matchPatterns = <T, TReturn>(match: T, patterns: PatternListForMatc
   }
 };
 
-const matchBase = <T>(match: T, pattern: Pattern<T>): MatchResult => {
+export const matchBase = <T>(match: T, pattern: Pattern<T>): MatchResult => {
   if (pattern === undefined) {
     return [match === undefined, {}]
   }

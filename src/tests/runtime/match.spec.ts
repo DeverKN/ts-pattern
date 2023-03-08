@@ -1,6 +1,8 @@
-import { _ } from "../../code/binds";
+import { as, matchBindCreator, _ } from "../../code/binds";
+import { isNonExhaustiveError } from "../../code/match";
 import { match } from "../../code/matcher";
 import { InferGenericType, SymbolForTag, Tagged, Tags, UNSAFE_TagsArray } from "../../future/taggedUnion";
+import { PredicateBind, PredicateRestBind } from "../../types/bind";
 // import { PredicateBind } from "../../types/bind";
 
 test("match string literal", () => {
@@ -156,6 +158,17 @@ test("sum list", () => {
   const sum = (list: number[]): number =>
     match(list)
       .against([_("first"), _("rest").rest], ({ first, rest }) => first + sum(rest))
+      .against([], () => 0)
+      .exhaustive();
+
+  expect(sum([1, 2, 3, 4, 5])).toBe(15);
+});
+
+test("as bind extracts full match", () => {
+  const matchBind = as("match", [_("first"), _("rest").s])
+  const sum = (list: number[]): number =>
+    match(list)
+      .against(matchBind, ({ match, first, rest }) => [match, first, rest])
       .against([], () => 0)
       .exhaustive();
 
@@ -333,3 +346,31 @@ const sum = (list: List<number>): number =>
 test("sum ADT", () => {
   expect(sum(Cons(15, Nil()))).toBe(15);
 });
+
+test("exhaustive returns nonExhaustiveError for fallthrought", () => {
+  expect(isNonExhaustiveError(match(5 as number).against(4, () => "FOUR").exhaustive)).toBe(true)
+})
+
+test("fallback returns value for match", () => {
+  expect(match(5 as number).against(5, () => "FIVE").fallback(() => "FALLBACK")).toBe("FIVE")
+})
+
+test("fallback returns fallback value for fallthrough", () => {
+  expect(match(5 as number).against(4, () => "FOUR").fallback(() => "FALLBACK")).toBe("FALLBACK")
+})
+
+test("run returns value for match", () => {
+  expect(match(5 as number).against(5, () => "FIVE").run()).toBe("FIVE")
+})
+
+test("run returns undefined for fallthrough", () => {
+  expect(match(5 as number).against(4, () => "FOUR").run()).toBe(undefined)
+})
+
+test("assertRun returns value for match", () => {
+  expect(match(5 as number).against(5, () => "FIVE").assertRun()).toBe("FIVE")
+})
+
+test("assertRun throws error for fallthrough", () => {
+  expect(() => match(5 as number).against(4, () => "FOUR").assertRun()).toThrowError("Pattern is not exhaustive for input 5")
+})

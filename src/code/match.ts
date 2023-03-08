@@ -32,7 +32,7 @@ export const against = <TMatch, TExistingReturn, TReturn, TPattern extends Patte
 };
 
 export const isNonExhaustiveError = (maybeError: NonExhaustiveError<unknown> | unknown): maybeError is NonExhaustiveError<unknown> => {
-  return maybeError !== null && typeof maybeError === "object" && (maybeError as Record<string, unknown>)._nonExhaustive === null;
+  return maybeError !== null && typeof maybeError === "object" && (maybeError as NonExhaustiveError<unknown>).__nonExhaustive === null;
 };
 
 export const exhaustive = <TMatch, TReturn>(
@@ -47,6 +47,7 @@ export const fallback = <TMatch, TFallbackReturn, TReturn>(
   matchObj: MatchObject<TMatch, TReturn>,
   fallbackFunction: (val: TMatch) => TFallbackReturn
 ): AssertNever<TMatch, TReturn, TFallbackReturn> => {
+  //UNTESTED
   const { match, patterns } = matchObj;
   const result = matchPatterns(match, patterns);
   if (isNonExhaustiveError(result)) {
@@ -57,6 +58,7 @@ export const fallback = <TMatch, TFallbackReturn, TReturn>(
 };
 
 export const run = <TMatch, TReturn>(matchObj: MatchObject<TMatch, TReturn>): TReturn | undefined => {
+  //UNTESTED
   const { match, patterns } = matchObj;
   const result = matchPatterns(match, patterns);
   if (isNonExhaustiveError(result)) {
@@ -67,6 +69,7 @@ export const run = <TMatch, TReturn>(matchObj: MatchObject<TMatch, TReturn>): TR
 };
 
 export const assertRun = <TMatch, TReturn>(matchObj: MatchObject<TMatch, TReturn>): TReturn => {
+  //UNTESTED
   const { match, patterns } = matchObj;
   const result = matchPatterns(match, patterns);
   if (isNonExhaustiveError(result)) {

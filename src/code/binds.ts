@@ -64,13 +64,13 @@ export const makeTypeBindFactory = <T>(type: BindTypes) => makePredicateBindFact
 export const matchBindCreator = <TLabel extends string, TMatch>(
   label: TLabel,
   match: TMatch
-): MatchBind<TLabel, Resolve<TMatch>> => {
+): MatchBind<TLabel, TMatch> => {
   const restBind = {
     label,
     match,
     bindType: "matchRestBind",
     [SymbolForBind]: true,
-  } as MatchRestBind<TLabel, Resolve<TMatch>>;
+  } as MatchRestBind<TLabel, TMatch>;
 
   return {
     label,
@@ -80,8 +80,10 @@ export const matchBindCreator = <TLabel extends string, TMatch>(
     rest: restBind,
     s: restBind,
     [SymbolForBind]: true,
-  } as MatchBind<TLabel, Resolve<TMatch>>;
+  } as MatchBind<TLabel, TMatch>;
 };
+
+export { matchBindCreator as as }
 
 export const number = makeTypeBindFactory<number>("number");
 export const string = makeTypeBindFactory<string>("string");

@@ -26,14 +26,18 @@ export type Tagged<TTag extends string, T = never> = {
 type TOrPattern<T> = T | Pattern<T>;
 export type Untag<T extends Tagged<string, unknown>> = T[SymbolForTagBase];
 
-export const map = <TTag extends string, T, U>(tagged: Tagged<TTag, T>, mapper: (arg: T) => U): Tagged<TTag, U> => {
-  const tag = tagged[SymbolForTag];
-  const tagBase = tagged[SymbolForTagBase];
-  return {
-    [SymbolForTag]: tag,
-    [SymbolForTagBase]: mapper(tagBase),
-  };
-};
+/**
+ * TODO: Make this actually work
+ */
+
+// export const map = <TTag extends string, T, U>(tagged: Tagged<TTag, T>, mapper: (arg: T) => U): Tagged<TTag, U> => {
+//   const tag = tagged[SymbolForTag];
+//   const tagBase = tagged[SymbolForTagBase];
+//   return {
+//     [SymbolForTag]: tag,
+//     [SymbolForTagBase]: mapper(tagBase),
+//   };
+// };
 
 type NonEmptyTaggedCreator<TTag extends string, T> = T extends unknown[]
   ? IsTuple<T> extends true
@@ -151,11 +155,11 @@ export const UNSAFE_TagsArray: UNSAFE_TagsArray = <T extends Tagged<string, unkn
   return Object.fromEntries(tags.map((tagName) => [tagName, Tag(tagName as string)])) as TagCreatorObject<T>;
 };
 
-const zip = <T, U>(t: T[], u: U[]): [T, U][] => {
-  return t.map((item, index) => {
-    return [item, u[index]];
-  });
-};
+// const zip = <T, U>(t: T[], u: U[]): [T, U][] => {
+//   return t.map((item, index) => {
+//     return [item, u[index]];
+//   });
+// };
 
 // export type UNSAFE_TagsArrayWithEmptyConstructors = <T extends Tagged<string, unknown>>(
 //   tags: UNSAFE_TuplifyUnion<T[SymbolForTag]>,
