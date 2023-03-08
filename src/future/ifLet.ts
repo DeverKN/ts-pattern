@@ -2,7 +2,8 @@ import { _ } from "../code/binds";
 import { match } from "../code/matcher";
 import { HandlerFunc, matchBase } from "../code/matcherEngine";
 import { ExtractBinds } from "../types/extract";
-import { Pattern } from "../types/pattern";
+import { IsAny } from "../types/helpers/narrow";
+import { ArrayPattern, ArrayPatternHelper, Pattern } from "../types/pattern";
 import { InferGenericType, Tagged, UNSAFE_TagsArray } from "./taggedUnion";
 
 export const ifLet = <
@@ -91,18 +92,22 @@ const main = () => {
   );
 };
 
+type IsAnyArray<T extends unknown[]> = T extends (infer TArr)[] ? IsAny<TArr> : false
+type IsGeneric<T> = T extends never ? true : false
+
 const head = <T>(list: T[]): T | null => {
   // ifLet([_("head"), _("rest").rest], list, ({ head }) => head)
   // return []
   // const [ first, ...rest ] = list
-  type TestPattern = Pattern<T[]>;
-  const test: TestPattern = [_("head"), _("rest").rest];
+  // type TestPattern = Pattern<T[]>;
+  // type TestArrayPattern = ArrayPattern<T[]>;
+  // type TestArrayHelperPattern = ArrayPatternHelper<T[]>;
+  // const test: TestPattern = [_("head"), _("rest").rest];
+  // // type True = IsGeneric<IsAnyArray<T[]>>
 
   return match(list)
+    .against([_("first"), _("rest").s], ({first}) => first)
     .against([], () => null)
-    .against(_("arr"), ({ arr: [first, ...rest] }) => {
-      return first;
-    })
     .exhaustive();
 };
 

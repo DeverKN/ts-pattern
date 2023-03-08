@@ -21,9 +21,9 @@ type ListPatternHelper<T extends unknown[]> = T extends (infer TArr)[]
   ? RestStartListPattern<TArr> | RestEndListPattern<TArr>
   : never;
 
-type ArrayPatternHelper<T extends unknown[]> = T extends never[]
+export type ArrayPatternHelper<T extends unknown[]> = /*T extends never[]
   ? EmptyArrayPattern
-  : T extends [infer First, ...infer Rest]
+  : */T extends [infer First, ...infer Rest]
   ? Rest extends never[]
     ? [Pattern<First>] | [RestBind<string, ArrayVals<T>>]
     : [Pattern<First>, ...ArrayPatternHelper<Rest>] | [RestBind<string, ArrayVals<T>>]
@@ -52,8 +52,8 @@ type BasePattern<T> = T extends string
   ? StringPattern<T>
   : T extends Primitive
   ? T
-  : T extends never[]
-  ? EmptyArrayPattern
+  // : T extends never[]
+  // ? EmptyArrayPattern
   : T extends unknown[]
   ? ArrayPattern<T>
   : T extends Record<string, unknown>
