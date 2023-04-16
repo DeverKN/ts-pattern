@@ -1,13 +1,9 @@
-import { as, matchBindCreator, _, number } from "../../code/binds";
+import { _ } from "../../code/binds";
 import { isNonExhaustiveError } from "../../code/match";
 import { match } from "../../code/matcher";
 import { c } from "../../future/Tuple";
-// import { tuple } from "../../code/tuple";
-// import { tuple } from "../../future/Tuple";
 import { ifLet } from "../../future/ifLet";
 import { InferGenericType, SymbolForTag, Tagged, Tags, UNSAFE_TagsArray } from "../../future/taggedUnion";
-import { PredicateBind, PredicateRestBind } from "../../types/bind";
-// import { PredicateBind } from "../../types/bind";
 
 test("match string literal", () => {
   expect(
@@ -22,7 +18,6 @@ test("match string literal", () => {
 test("bind string literal", () => {
   expect(
     match("test")
-      // .against([_("str")] as [PredicateBind<"str", any>], () => "test")
       .against(_("str"), ({ str }) => str)
       .exhaustive()
   ).toBe("test");
@@ -307,7 +302,7 @@ test("match symbol on object literal", () => {
 test("match algebraic data type", () => {
   type Tree<T> = Tagged<"Leaf"> | Tagged<"Node", { left: Tree<T>; right: Tree<T>; value: T }>;
 
-  const { Leaf, Node } = UNSAFE_TagsArray<Tree<InferGenericType>>("Leaf", "Node");
+  const { Leaf, Node } = Tags<Tree<InferGenericType>>()("Leaf", "Node");
 
   const inOrderTraversal = (tree: Tree<string | number>): string =>
     match(tree)
@@ -411,6 +406,7 @@ const unwrap = <T>(option: Option<T>): T => {
     throw Error(`Attemped to unwrap a "None" value`);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return ifLet(Some(_("val")), option, ({ val }) => {
     return val;
   })!;
@@ -432,4 +428,52 @@ it("should extract types from tuple", () => {
       })
       .exhaustive()
   ).toStrictEqual([1, 2]);
+});
+
+test("discriminated union type inference", () => {
+  type DogOrTree =
+    | Tagged<"Dog", { age: number; bark: () => string }>
+    | Tagged<"Tree", { age: number; bark: boolean }>;
+
+  const { Dog, Tree } = Tags<DogOrTree>()("Dog", "Tree");
+
+  //Incorrect
+  const meet = (item: DogOrTree) => {
+    return match(item)
+      .against(Dog({ age: _, bark: _("bark") }), ({ bark }) => {
+        bark();
+        //^Works fine, typeof bark is () => void
+      })
+      .against(Tree({ age: _, bark: _("bark") }), ({ bark }) => {
+        // bark();
+        //^TypeError, typeof bark is boolean
+      })
+      .exhaustive();
+  };
+
+  //Correct
+  const meet$ = (item: DogOrTree) => {
+    return match(item)
+      .against(Dog({ age: _, bark: _("bark") }), ({ bark }) => {
+        bark();
+        return "Dog!";
+      })
+      .against(Tree({ age: _, bark: _("bark") }), ({ bark }) => {
+        return `Tree ${bark ? "with" : "without"} bark`;
+      })
+      .exhaustive();
+  };
+
+  //Correct
+  // const meet$$ = (item: DogOrTree) => {
+  //   return match(item)
+  //     .against(Tree({ age: _, bark: _("bark") }), ({ bark }) => {
+  //       return `Tree ${bark ? "with" : "without"} bark`;
+  //     })
+  //     .against({bark}, ({ dog }) => {
+  //       dog.bark();
+  //       return "Dog!";
+  //     })
+  //     .exhaustive();
+  // };
 });

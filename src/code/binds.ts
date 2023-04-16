@@ -8,7 +8,6 @@ import {
   PredicateWildCard,
   SymbolForBind,
 } from "../types/bind";
-import { Resolve } from "../types/resolve";
 
 export const makePredicateBind = <Label extends string, TPredicate>(
   label: Label,
