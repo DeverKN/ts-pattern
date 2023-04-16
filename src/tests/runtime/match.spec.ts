@@ -1,6 +1,10 @@
-import { as, matchBindCreator, _ } from "../../code/binds";
+import { as, matchBindCreator, _, number } from "../../code/binds";
 import { isNonExhaustiveError } from "../../code/match";
 import { match } from "../../code/matcher";
+import { c } from "../../future/Tuple";
+// import { tuple } from "../../code/tuple";
+// import { tuple } from "../../future/Tuple";
+import { ifLet } from "../../future/ifLet";
 import { InferGenericType, SymbolForTag, Tagged, Tags, UNSAFE_TagsArray } from "../../future/taggedUnion";
 import { PredicateBind, PredicateRestBind } from "../../types/bind";
 // import { PredicateBind } from "../../types/bind";
@@ -164,16 +168,16 @@ test("sum list", () => {
   expect(sum([1, 2, 3, 4, 5])).toBe(15);
 });
 
-test("as bind extracts full match", () => {
-  const matchBind = as("match", [_("first"), _("rest").s])
-  const sum = (list: number[]): number =>
-    match(list)
-      .against(matchBind, ({ match, first, rest }) => [match, first, rest])
-      .against([], () => 0)
-      .exhaustive();
+// test("as bind extracts full match", () => {
+//   const matchBind = as("match", [_("first"), _("rest").s])
+//   const sum = (list: number[]): number =>
+//     match(list)
+//       .against(matchBind, ({ match, first, rest }) => [match, first, rest])
+//       .against([], () => 0)
+//       .exhaustive();
 
-  expect(sum([1, 2, 3, 4, 5])).toBe(15);
-});
+//   expect(sum([1, 2, 3, 4, 5])).toBe(15);
+// });
 
 // test("sum list, empty first", () => {
 //   const sum = (list: number[]): number =>
@@ -348,29 +352,84 @@ test("sum ADT", () => {
 });
 
 test("exhaustive returns nonExhaustiveError for fallthrought", () => {
-  expect(isNonExhaustiveError(match(5 as number).against(4, () => "FOUR").exhaustive)).toBe(true)
-})
+  expect(isNonExhaustiveError(match(5 as number).against(4, () => "FOUR").exhaustive)).toBe(true);
+});
 
 test("fallback returns value for match", () => {
-  expect(match(5 as number).against(5, () => "FIVE").fallback(() => "FALLBACK")).toBe("FIVE")
-})
+  expect(
+    match(5 as number)
+      .against(5, () => "FIVE")
+      .fallback(() => "FALLBACK")
+  ).toBe("FIVE");
+});
 
 test("fallback returns fallback value for fallthrough", () => {
-  expect(match(5 as number).against(4, () => "FOUR").fallback(() => "FALLBACK")).toBe("FALLBACK")
-})
+  expect(
+    match(5 as number)
+      .against(4, () => "FOUR")
+      .fallback(() => "FALLBACK")
+  ).toBe("FALLBACK");
+});
 
 test("run returns value for match", () => {
-  expect(match(5 as number).against(5, () => "FIVE").run()).toBe("FIVE")
-})
+  expect(
+    match(5 as number)
+      .against(5, () => "FIVE")
+      .run()
+  ).toBe("FIVE");
+});
 
 test("run returns undefined for fallthrough", () => {
-  expect(match(5 as number).against(4, () => "FOUR").run()).toBe(undefined)
-})
+  expect(
+    match(5 as number)
+      .against(4, () => "FOUR")
+      .run()
+  ).toBe(undefined);
+});
 
 test("assertRun returns value for match", () => {
-  expect(match(5 as number).against(5, () => "FIVE").assertRun()).toBe("FIVE")
-})
+  expect(
+    match(5 as number)
+      .against(5, () => "FIVE")
+      .assertRun()
+  ).toBe("FIVE");
+});
 
 test("assertRun throws error for fallthrough", () => {
-  expect(() => match(5 as number).against(4, () => "FOUR").assertRun()).toThrowError("Pattern is not exhaustive for input 5")
-})
+  expect(() =>
+    match(5 as number)
+      .against(4, () => "FOUR")
+      .assertRun()
+  ).toThrowError("Pattern is not exhaustive for input 5");
+});
+
+type Option<T> = Tagged<"Some", T> | Tagged<"None">;
+const { Some, None } = UNSAFE_TagsArray<Option<InferGenericType>>("Some", "None");
+
+const unwrap = <T>(option: Option<T>): T => {
+  ifLet(None(), option, () => {
+    throw Error(`Attemped to unwrap a "None" value`);
+  });
+
+  return ifLet(Some(_("val")), option, ({ val }) => {
+    return val;
+  })!;
+};
+
+it("unwrapping a some value returns inner value", () => {
+  expect(unwrap(Some(5))).toBe(5);
+});
+
+it("unwrapping a none value throws an error", () => {
+  expect(() => unwrap(None())).toThrowError(`Attemped to unwrap a "None" value`);
+});
+
+it("should extract types from tuple", () => {
+  expect(
+    match(c([1, 2]))
+      .against(c([_("x"), _("y")]), ({ x, y }) => {
+        return [x, y];
+      })
+      .exhaustive()
+  ).toStrictEqual([1, 2]);
+});

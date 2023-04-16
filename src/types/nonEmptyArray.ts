@@ -155,9 +155,9 @@ export type FancyExcludeV2<T, U> = T extends unknown[]
     : Exclude<T, U>
   : Exclude<T, U>;
 
-const pattern = [_("first"), _("rest").s] as [PredicateBind<"first", any>, PredicateRestBind<"rest", any>];
-type Resolved = ResolveNonLiteralToNever<typeof pattern>;
-type Test5 = FancyExcludeV2<number[], Resolved>;
+// const pattern = [_("first"), _("rest").s] as [PredicateBind<"first", any>, PredicateRestBind<"rest", any>];
+// type Resolved = ResolveNonLiteralToNever<typeof pattern>;
+// type Test5 = FancyExcludeV2<number[], Resolved>;
 
 // type Excluded = FancyExcludeArray<number[], [any, PredicateRestBind<string, any>]>;
 // type Excluded2 = FancyExcludeArrayV2<number[], [any, RestBind<string, any>]>;

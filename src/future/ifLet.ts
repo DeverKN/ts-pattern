@@ -3,6 +3,7 @@ import { match } from "../code/matcher";
 import { HandlerFunc, matchBase } from "../code/matcherEngine";
 import { ExtractBinds } from "../types/extract";
 import { IsAny } from "../types/helpers/narrow";
+import { FallthroughMatches } from "../types/matcher";
 import { ArrayPattern, ArrayPatternHelper, Pattern } from "../types/pattern";
 import { InferGenericType, Tagged, UNSAFE_TagsArray } from "./taggedUnion";
 
@@ -41,6 +42,25 @@ export const whileLet = <
   }
 };
 
+export const recLet = <
+  TPattern extends Pattern<TMatch>,
+  TMatch,
+  TReturn,
+  THandler extends HandlerFunc<TMatch, TPattern, TMatch>
+>(
+  pattern: TPattern,
+  match: TMatch,
+  handler: THandler
+): FallthroughMatches<TMatch, TPattern> => {
+  const [isMatch, binds] = matchBase(match, pattern);
+  if (isMatch) {
+    const newMatch = handler(binds as ExtractBinds<TMatch, TPattern>);
+    return recLet(pattern, newMatch, handler);
+  } else {
+    return match as FallthroughMatches<TMatch, TPattern>; // | TReturn
+  }
+};
+
 type Option<T> = Tagged<"Some", T> | Tagged<"None">;
 const { Some, None } = UNSAFE_TagsArray<Option<InferGenericType>>("Some", "None");
 
@@ -74,7 +94,7 @@ const main = () => {
   let optional: Option<number> = Some(0);
 
   // This reads: "while `let` destructures `optional` into
-  // `Some(i)`, evaluate the block (`{}`). Else `break`.
+  // `Some(i)`, evaluate the block `(({ i }) => { ... })`. Else `break`.
   whileLet(
     Some(_("i")),
     () => optional,
@@ -90,10 +110,22 @@ const main = () => {
       // explicitly handling the failing case.
     }
   );
+
+  return recLet(Some(_("i")), optional as Option<number>, ({ i }) => {
+    if (i > 9) {
+      console.log("Greater than 9, quit!");
+      return None();
+    } else {
+      console.log(`'i' is ${i}. Try again.`);
+      return Some(i + 1);
+    }
+    // ^ Less rightward drift and doesn't require
+    // explicitly handling the failing case.
+  });
 };
 
-type IsAnyArray<T extends unknown[]> = T extends (infer TArr)[] ? IsAny<TArr> : false
-type IsGeneric<T> = T extends never ? true : false
+type IsAnyArray<T extends unknown[]> = T extends (infer TArr)[] ? IsAny<TArr> : false;
+type IsGeneric<T> = T extends never ? true : false;
 
 const head = <T>(list: T[]): T | null => {
   // ifLet([_("head"), _("rest").rest], list, ({ head }) => head)
@@ -106,12 +138,12 @@ const head = <T>(list: T[]): T | null => {
   // // type True = IsGeneric<IsAnyArray<T[]>>
 
   return match(list)
-    .against([_("first"), _("rest").s], ({first}) => first)
+    .against([_("first"), _("rest").s], ({ first, rest }) => first)
     .against([], () => null)
     .exhaustive();
 };
 
-const unwrap = <T>(option: Option<T>) => {
+const unwrap = <T>(option: Option<T>): T => {
   // ifLet(None(), option, () => {
   //   throw Error(`Attemped to unwrap a "None" value`)
   // })
@@ -126,3 +158,9 @@ const unwrap = <T>(option: Option<T>) => {
     })
     .exhaustive();
 };
+
+// const test = (arg: []) => {
+//   return match(arg)
+//     .against(_("i"), ({ i }) => i)
+//     .exhaustive();
+// };
