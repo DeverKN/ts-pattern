@@ -4,7 +4,7 @@ import { HandlerFunc, matchBase } from "../code/matcherEngine";
 import { ExtractBinds } from "../types/extract";
 import { IsAny } from "../types/helpers/narrow";
 import { FallthroughMatches } from "../types/matcher";
-import { ArrayPattern, ArrayPatternHelper, Pattern } from "../types/pattern";
+import { Pattern } from "../types/pattern";
 import { InferGenericType, Tagged, UNSAFE_TagsArray } from "./taggedUnion";
 
 export const ifLet = <
@@ -21,6 +21,25 @@ export const ifLet = <
     return handler(binds as ExtractBinds<TMatch, TPattern>) as ReturnType<THandler>;
   } else {
     return undefined;
+  }
+};
+
+export const ifLetElse = <
+  TPattern extends Pattern<TMatch>,
+  TMatch,
+  THandler extends HandlerFunc<TMatch, TPattern, unknown>,
+  TElse
+>(
+  pattern: TPattern,
+  match: TMatch,
+  handler: THandler,
+  elseVal: (val: FallthroughMatches<TMatch, TPattern>) => TElse
+): ReturnType<THandler> | TElse => {
+  const [isMatch, binds] = matchBase(match, pattern);
+  if (isMatch) {
+    return handler(binds as ExtractBinds<TMatch, TPattern>) as ReturnType<THandler>;
+  } else {
+    return elseVal(match as FallthroughMatches<TMatch, TPattern>);
   }
 };
 
@@ -91,14 +110,11 @@ const whileRec = (cond: () => boolean, then: () => void): void => {
 };
 
 const main = () => {
-  let optional: Option<number> = Some(0);
+  let optional = Some(0) as Option<number>;
 
   // This reads: "while `let` destructures `optional` into
   // `Some(i)`, evaluate the block `(({ i }) => { ... })`. Else `break`.
-  whileLet(
-    Some(_("i")),
-    () => optional,
-    ({ i }) => {
+  whileLet(Some(_("i")), () => optional, ({ i }) => {
       if (i > 9) {
         console.log("Greater than 9, quit!");
         optional = None();
@@ -111,7 +127,7 @@ const main = () => {
     }
   );
 
-  return recLet(Some(_("i")), optional as Option<number>, ({ i }) => {
+  return recLet(Some(_("i")), optional, ({ i }) => {
     if (i > 9) {
       console.log("Greater than 9, quit!");
       return None();
@@ -144,19 +160,22 @@ const head = <T>(list: T[]): T | null => {
 };
 
 const unwrap = <T>(option: Option<T>): T => {
-  // ifLet(None(), option, () => {
-  //   throw Error(`Attemped to unwrap a "None" value`)
-  // })
-
-  // return ifLet(Some(_("val")), option, ({ val }) => {
-  //   return val
-  // })
-  return match(option)
-    .against(Some(_("val")), ({ val }) => val)
-    .against(None(), () => {
+  return ifLetElse(
+    Some(_("val")),
+    option,
+    ({ val }) => {
+      return val;
+    },
+    () => {
       throw Error(`Attemped to unwrap a "None" value`);
-    })
-    .exhaustive();
+    }
+  );
+  // return match(option)
+  //   .against(Some(_("val")), ({ val }) => val)
+  //   .against(None(), () => {
+  //     throw Error(`Attemped to unwrap a "None" value`);
+  //   })
+  //   .exhaustive();
 };
 
 // const test = (arg: []) => {
