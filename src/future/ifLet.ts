@@ -7,6 +7,7 @@ import { FallthroughMatches } from "../types/matcher";
 import { Pattern } from "../types/pattern";
 import { InferGenericType, Tagged, UNSAFE_TagsArray } from "./taggedUnion";
 
+type IfLetReturn<TPattern, TMatch, THandlerReturn> = [FallthroughMatches<TMatch, TPattern>] extends [never] ? THandlerReturn : THandlerReturn | undefined
 export const ifLet = <
   TPattern extends Pattern<TMatch>,
   TMatch,
@@ -15,12 +16,30 @@ export const ifLet = <
   pattern: TPattern,
   match: TMatch,
   handler: THandler
-): ReturnType<THandler> | undefined => {
+): IfLetReturn<TPattern, TMatch, ReturnType<THandler>> => {
+  type ComputedReturnType = IfLetReturn<TPattern, TMatch, ReturnType<THandler>>
   const [isMatch, binds] = matchBase(match, pattern);
   if (isMatch) {
     return handler(binds as ExtractBinds<TMatch, TPattern>) as ReturnType<THandler>;
   } else {
-    return undefined;
+    return undefined as ComputedReturnType;
+  }
+};
+
+type DestructureReturn<TPattern, TMatch, ExtractedBinds = ExtractBinds<TMatch, TPattern>> = [FallthroughMatches<TMatch, TPattern>] extends [never] ? ExtractedBinds : ExtractedBinds | undefined
+export const destructure = <
+  TPattern extends Pattern<TMatch>,
+  TMatch,
+>(
+  pattern: TPattern,
+  match: TMatch,
+): DestructureReturn<TPattern, TMatch> => {
+  type ComputedReturnType = DestructureReturn<TPattern, TMatch>
+  const [isMatch, binds] = matchBase(match, pattern);
+  if (isMatch) {
+    return binds as ComputedReturnType;
+  } else {
+    return undefined as ComputedReturnType;
   }
 };
 
@@ -154,7 +173,7 @@ const head = <T>(list: T[]): T | null => {
   // // type True = IsGeneric<IsAnyArray<T[]>>
 
   return match(list)
-    .against([_("first"), _("rest").s], ({ first, rest }) => first)
+    .against([_("first"), _("rest").rest], ({ first }) => first)
     .against([], () => null)
     .exhaustive();
 };
@@ -170,12 +189,6 @@ const unwrap = <T>(option: Option<T>): T => {
       throw Error(`Attemped to unwrap a "None" value`);
     }
   );
-  // return match(option)
-  //   .against(Some(_("val")), ({ val }) => val)
-  //   .against(None(), () => {
-  //     throw Error(`Attemped to unwrap a "None" value`);
-  //   })
-  //   .exhaustive();
 };
 
 // const test = (arg: []) => {

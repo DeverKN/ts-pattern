@@ -2,7 +2,7 @@ import { _ } from "../../code/binds";
 import { isNonExhaustiveError } from "../../code/match";
 import { match } from "../../code/matcher";
 import { c } from "../../future/Tuple";
-import { ifLet } from "../../future/ifLet";
+import { destructure, ifLet } from "../../future/ifLet";
 import { InferGenericType, SymbolForTag, Tagged, Tags, UNSAFE_TagsArray } from "../../future/taggedUnion";
 
 test("match string literal", () => {
@@ -346,8 +346,16 @@ test("sum ADT", () => {
   expect(sum(Cons(15, Nil()))).toBe(15);
 });
 
-test("exhaustive returns nonExhaustiveError for fallthrought", () => {
-  expect(isNonExhaustiveError(match(5 as number).against(4, () => "FOUR").exhaustive)).toBe(true);
+test("exhaustive returns nonExhaustiveError for fallthrough", () => {
+  expect(
+    isNonExhaustiveError(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      match(5 as number)
+        .against(4, () => "FOUR")
+        //  @ts-expect-error Exhaustive property shouldn't be accessible
+        .exhaustive()
+    )
+  ).toBe(true);
 });
 
 test("fallback returns value for match", () => {
@@ -430,10 +438,19 @@ it("should extract types from tuple", () => {
   ).toStrictEqual([1, 2]);
 });
 
+it("should allow destructuring of tagged types", () => {
+  type Point = Tagged<"Point", [x: number, y: number]>;
+  const { Point } = Tags<Point>()("Point");
+  const testPoint = Point(0, 0);
+  const moveForward = (start: Point): Point => {
+    const { x, y } = destructure(Point(_("x"), _("y")), start);
+    return Point(x + 10, y)
+  };
+  expect(moveForward(testPoint)).toStrictEqual(Point(10, 0))
+});
+
 test("discriminated union type inference", () => {
-  type DogOrTree =
-    | Tagged<"Dog", { age: number; bark: () => string }>
-    | Tagged<"Tree", { age: number; bark: boolean }>;
+  type DogOrTree = Tagged<"Dog", { age: number; bark: () => string }> | Tagged<"Tree", { age: number; bark: boolean }>;
 
   const { Dog, Tree } = Tags<DogOrTree>()("Dog", "Tree");
 
